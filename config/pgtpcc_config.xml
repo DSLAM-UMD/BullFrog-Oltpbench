@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<parameters>
+    <dbtype>postgres</dbtype>
+    <driver>org.postgresql.Driver</driver>
+    <DBUrl>jdbc:postgresql://localhost:5433/tpcc</DBUrl>
+    <DBName>tpcc</DBName>
+    <username>postgres</username>
+    <password>postgres</password>
+    <terminals>1</terminals>
+    
+    <scalefactor>1</scalefactor>
+    <uploadCode></uploadCode>
+    <uploadUrl></uploadUrl>
+    
+   
+    <transactiontypes>
+    <transactiontype>
+        <name>StockLevelLazyMigrationJoin</name>
+        <id>1</id>
+    </transactiontype>
+    <transactiontype>
+        <name>NewOrder</name>
+        <id>2</id>
+    </transactiontype>
+    <transactiontype>
+        <name>OrderStatus</name>
+        <id>3</id>
+    </transactiontype>
+    </transactiontypes>
+   
+    <works>
+        <work>
+          <rate>3</rate>
+          <time>10</time>
+          <weights>20, 40, 40</weights>
+        </work>
+        </works>
+
+</parameters>
