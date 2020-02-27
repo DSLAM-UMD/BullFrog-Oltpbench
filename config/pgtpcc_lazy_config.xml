@@ -2,7 +2,7 @@
 <parameters>
     <dbtype>postgres</dbtype>
     <driver>org.postgresql.Driver</driver>
-    <DBUrl>jdbc:postgresql://localhost:5435/tpcc</DBUrl>
+    <DBUrl>jdbc:postgresql://localhost:5436/tpcc</DBUrl>
     <DBName>tpcc</DBName>
     <username>postgres</username>
     <password>postgres</password>
@@ -31,7 +31,7 @@
                 <id>4</id>
         </transactiontype>
         <transactiontype>
-                <name>StockLevel</name>
+                <name>StockLevelLazyMigrationJoin</name>
                 <id>5</id>
         </transactiontype>
         </transactiontypes>
