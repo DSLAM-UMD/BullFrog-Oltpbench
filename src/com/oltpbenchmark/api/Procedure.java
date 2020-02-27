@@ -64,7 +64,7 @@ public abstract class Procedure {
             String line;
             String result;
             while ((line = reader.readLine()) != null) {
-                LOG.info(line);
+                // LOG.info(line);
             }
             try {
                 p.waitFor();
