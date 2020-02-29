@@ -65,9 +65,7 @@
         </work>
         <work>
           <time>700</time>
-          <!-- <rate>1</rate> -->
-          <serial>true</serial>
-          <rate>unlimited</rate>
+          <rate>1</rate>
           <active_terminals>1</active_terminals> 
 	  <weights bench="tpcc">0, 0, 0, 0, 0, 100, 0, 0, 0, 0</weights>
         </work>
