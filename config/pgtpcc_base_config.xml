@@ -64,8 +64,8 @@
           <weights bench="tpcc">45, 43, 4, 4, 4, 0, 0, 0, 0, 0</weights>
         </work>
         <work>
-          <!-- <time>700</time>
-          <rate>1</rate> -->
+          <time>700</time>
+          <!-- <rate>1</rate> -->
           <serial>true</serial>
           <rate>unlimited</rate>
           <active_terminals>1</active_terminals> 
