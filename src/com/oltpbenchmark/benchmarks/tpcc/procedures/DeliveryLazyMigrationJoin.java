@@ -83,7 +83,13 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
-            "  where ol_i_id = s_i_id); ";
+            "  where ol_i_id = s_i_id); "
+            +
+            "update orderline_stock " +
+            "   set ol_delivery_d = {3} " +
+			" where ol_o_id = {4,number,#} " +
+			"   and ol_d_id = {5,number,#} " +
+			"   and ol_w_id = {6,number,#} ";
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
 	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
@@ -210,28 +216,28 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
 
             // migration txn
             String migration = MessageFormat.format(txnFormat,
-                no_o_id, d_id, w_id);
-            // LOG.info(migration);
+                no_o_id, d_id, w_id, timestamp.toString(), no_o_id, d_id, w_id);
+            LOG.info(migration);
             String[] command = {"/bin/sh", "-c",
                 "echo '" + migration + "' | " +
                 DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
                 DBWorkload.DB_PORT_NUMBER + " tpcc"};
             execCommands(command);
 
-            delivUpdateDeliveryDate.setTimestamp(1, timestamp);
-            delivUpdateDeliveryDate.setInt(2, no_o_id);
-            delivUpdateDeliveryDate.setInt(3, d_id);
-            delivUpdateDeliveryDate.setInt(4, w_id);
-            if (trace) LOG.trace("delivUpdateDeliveryDate START");
-            result = delivUpdateDeliveryDate.executeUpdate();
-            if (trace) LOG.trace("delivUpdateDeliveryDate END");
+            // delivUpdateDeliveryDate.setTimestamp(1, timestamp);
+            // delivUpdateDeliveryDate.setInt(2, no_o_id);
+            // delivUpdateDeliveryDate.setInt(3, d_id);
+            // delivUpdateDeliveryDate.setInt(4, w_id);
+            // if (trace) LOG.trace("delivUpdateDeliveryDate START");
+            // result = delivUpdateDeliveryDate.executeUpdate();
+            // if (trace) LOG.trace("delivUpdateDeliveryDate END");
 
-            if (result == 0){
-                String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
-                                           w_id, d_id, no_o_id);
-                if (trace) LOG.warn(msg);
-                throw new RuntimeException(msg);
-            }
+            // if (result == 0){
+            //     String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
+            //                                w_id, d_id, no_o_id);
+            //     if (trace) LOG.warn(msg);
+            //     throw new RuntimeException(msg);
+            // }
 
 
             delivSumOrderAmount.setInt(1, no_o_id);
