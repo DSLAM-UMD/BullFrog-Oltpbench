@@ -59,12 +59,15 @@
         <work>
           <time>20</time>
           <rate>100</rate>
+          <warmup>10</warmup>
           <active_terminals>10</active_terminals>
           <weights bench="tpcc">45, 43, 4, 4, 4, 0, 0, 0, 0, 0</weights>
         </work>
         <work>
-          <time>700</time>
-          <rate>1</rate>
+          <!-- <time>700</time>
+          <rate>1</rate> -->
+          <serial>true</serial>
+          <rate>unlimited</rate>
           <active_terminals>1</active_terminals> 
 	  <weights bench="tpcc">0, 0, 0, 0, 0, 100, 0, 0, 0, 0</weights>
         </work>
