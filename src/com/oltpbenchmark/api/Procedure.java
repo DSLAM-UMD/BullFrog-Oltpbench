@@ -63,9 +63,9 @@ public abstract class Procedure {
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             String line;
             String result;
-            while ((line = reader.readLine()) != null) {
-                // LOG.info(line);
-            }
+            // while ((line = reader.readLine()) != null) {
+            //    LOG.info(line);
+            //}
             try {
                 p.waitFor();
                 is.close();

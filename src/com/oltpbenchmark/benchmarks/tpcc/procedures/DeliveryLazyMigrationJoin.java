@@ -217,7 +217,7 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             // migration txn
             String migration = MessageFormat.format(txnFormat,
                 no_o_id, d_id, w_id, no_o_id, d_id, w_id);
-            LOG.info(migration);
+            // LOG.info(migration);
             String[] command = {"/bin/sh", "-c",
                 "echo '" + migration + "' | " +
                 DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
