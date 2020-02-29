@@ -15,7 +15,7 @@
    
         <transactiontypes>
         <transactiontype>
-                <name>NewOrder</name>
+                <name>NewOrderLazyMigrationJoin</name>
                 <id>1</id>
         </transactiontype>
         <transactiontype>
@@ -23,11 +23,11 @@
                 <id>2</id>
         </transactiontype>
         <transactiontype>
-                <name>OrderStatus</name>
+                <name>OrderStatusLazyMigrationJoin</name>
                 <id>3</id>
         </transactiontype>
         <transactiontype>
-                <name>Delivery</name>
+                <name>DeliveryLazyMigrationJoin</name>
                 <id>4</id>
         </transactiontype>
         <transactiontype>
@@ -38,7 +38,7 @@
    
     <works>
         <work>
-          <time>60</time>
+          <time>740</time>
           <rate>100</rate>
           <weights>45, 43, 4, 4, 4</weights>
         </work>
