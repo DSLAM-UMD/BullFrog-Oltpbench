@@ -86,10 +86,10 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             "  where ol_i_id = s_i_id); "
             +
             "update orderline_stock " +
-            "   set ol_delivery_d = {3} " +
-			" where ol_o_id = {4,number,#} " +
-			"   and ol_d_id = {5,number,#} " +
-			"   and ol_w_id = {6,number,#} ";
+            "   set ol_delivery_d = NOW() " +
+			" where ol_o_id = {3,number,#} " +
+			"   and ol_d_id = {4,number,#} " +
+			"   and ol_w_id = {5,number,#}; ";
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
 	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
@@ -216,7 +216,7 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
 
             // migration txn
             String migration = MessageFormat.format(txnFormat,
-                no_o_id, d_id, w_id, timestamp.toString(), no_o_id, d_id, w_id);
+                no_o_id, d_id, w_id, no_o_id, d_id, w_id);
             LOG.info(migration);
             String[] command = {"/bin/sh", "-c",
                 "echo '" + migration + "' | " +
