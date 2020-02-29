@@ -43,7 +43,7 @@ public class StockLevelBaseMigrationJoinPhaseTwo extends TPCCProcedure {
 
     public static final String queryFormat =
             "select count(distinct (s_i_id)) as stock_count " +
-            " from orderline_stock " +
+            " from " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
             " where ol_w_id = {0,number,#} " +
             " and ol_d_id = {1,number,#} " +
             " and ol_o_id < {2,number,#} " +
