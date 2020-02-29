@@ -46,7 +46,6 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
             // SET max_parallel_workers_per_gather = 0;
             // SET enable_hashjoin TO off;
             // SET enable_mergejoin TO off;
-            "begin; " +
             "migrate 2 order_line stock " +
             " explain select count(*) from orderline_stock_v " +
             " where ol_w_id = {0,number,#} " +
@@ -78,8 +77,7 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
             " and ol_o_id < {8,number,#} " +
             " and ol_o_id >= {9,number,#} " +
             " and s_w_id = {10,number,#} " +
-            " and s_quantity < {11,number,#}; " +
-            "commit;";
+            " and s_quantity < {11,number,#};";
 
 	private PreparedStatement stockGetDistOrderId = null;
 

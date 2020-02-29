@@ -39,7 +39,7 @@ public class StockLevelBaseMigrationJoinPhaseOne extends TPCCProcedure {
     private static AtomicLong numRun = new AtomicLong(0);
 
     private static final String migration =
-            "migrate insert into orderline_stock(" +
+            "insert into orderline_stock(" +
             " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
             " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
