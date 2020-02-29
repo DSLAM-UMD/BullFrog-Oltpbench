@@ -13,7 +13,7 @@
     <uploadUrl></uploadUrl>
     
    
-        <transactiontypes>
+        <transactiontypes bench="tpcc">
         <transactiontype>
                 <name>NewOrder</name>
                 <id>1</id>
@@ -34,13 +34,25 @@
                 <name>StockLevel</name>
                 <id>5</id>
         </transactiontype>
-        </transactiontypes>
-   
+<transactiontype>
+<name>StockLevelBaseMigrationJoinPhaseOne</name>
+<id>6</id>
+</transactiontype>
+</transactiontypes>
+
+
     <works>
         <work>
-          <time>60</time>
-          <rate>100</rate>
-          <weights>45, 43, 4, 4, 4</weights>
+          <time>10</time>
+          <rate>1000</rate>
+          <active_terminals>10</active_terminals>
+          <weights bench="tpcc">45, 43, 4, 4, 4, 0</weights>
+        </work>
+        <work>
+          <time>30</time>
+          <rate>1</rate>
+          <active_terminals>1</active_terminals> 
+	  <weights bench="tpcc">0,0,0,0,0,100</weights>
         </work>
         </works>
 

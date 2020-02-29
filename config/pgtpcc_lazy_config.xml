@@ -8,7 +8,7 @@
     <password>postgres</password>
     <terminals>10</terminals>
     
-    <scalefactor>10</scalefactor>
+    <scalefactor>1</scalefactor>
     <uploadCode></uploadCode>
     <uploadUrl></uploadUrl>
     
@@ -38,8 +38,8 @@
    
     <works>
         <work>
-          <time>240</time>
-          <rate>1000</rate>
+          <time>60</time>
+          <rate>100</rate>
           <weights>45, 43, 4, 4, 4</weights>
         </work>
         </works>
