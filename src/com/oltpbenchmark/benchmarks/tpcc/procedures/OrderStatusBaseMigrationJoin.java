@@ -32,9 +32,9 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.pojo.Customer;
 
-public class OrderStatusBaseMigration extends TPCCProcedure {
+public class OrderStatusBaseMigrationJoin extends TPCCProcedure {
 
-    private static final Logger LOG = Logger.getLogger(OrderStatusBaseMigration.class);
+    private static final Logger LOG = Logger.getLogger(OrderStatusBaseMigrationJoin.class);
 
 	public SQLStmt ordStatGetNewestOrdSQL = new SQLStmt(
 	        "SELECT O_ID, O_CARRIER_ID, O_ENTRY_D " +

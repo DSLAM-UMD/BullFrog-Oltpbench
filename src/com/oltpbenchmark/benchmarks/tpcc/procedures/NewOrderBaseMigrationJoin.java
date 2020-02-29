@@ -30,9 +30,9 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 
-public class NewOrderBaseMigration extends TPCCProcedure {
+public class NewOrderBaseMigrationJoin extends TPCCProcedure {
 
-    private static final Logger LOG = Logger.getLogger(NewOrderBaseMigration.class);
+    private static final Logger LOG = Logger.getLogger(NewOrderBaseMigrationJoin.class);
 
     public final SQLStmt stmtGetCustSQL = new SQLStmt(
     		"SELECT C_DISCOUNT, C_LAST, C_CREDIT" +

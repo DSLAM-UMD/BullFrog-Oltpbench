@@ -31,9 +31,9 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 
-public class DeliveryBaseMigration extends TPCCProcedure {
+public class DeliveryBaseMigrationJoin extends TPCCProcedure {
 
-    private static final Logger LOG = Logger.getLogger(DeliveryBaseMigration.class);
+    private static final Logger LOG = Logger.getLogger(DeliveryBaseMigrationJoin.class);
 
 	public SQLStmt delivGetOrderIdSQL = new SQLStmt(
 	        "SELECT NO_O_ID FROM " + TPCCConstants.TABLENAME_NEWORDER + 
