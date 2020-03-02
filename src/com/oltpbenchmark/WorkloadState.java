@@ -86,7 +86,8 @@ public class WorkloadState {
             else {
                 // Add the specified number of procedures to the end of the queue.
                 int type = 0;
-                for (int i = 0; i < amount; ++i)
+                if (benchmarkState.getState() != State.WARMUP) {
+                for (int i = 0; i < amount; ++i) {
                     type = currentPhase.chooseTransaction();
                     if (type != DBWorkload.MIGRATION_TXN_ID) {
                         workQueue.add(new SubmittedProcedure(type));
@@ -95,6 +96,8 @@ public class WorkloadState {
                         workQueue.add(new SubmittedProcedure(type));
                         DBWorkload.IS_MIGRATED = true;                       
                     }
+                }
+                }
                }
 
             // Can't keep up with current rate? Remove the oldest transactions

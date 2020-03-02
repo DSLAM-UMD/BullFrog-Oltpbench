@@ -2,7 +2,7 @@
 <parameters>
     <dbtype>postgres</dbtype>
     <driver>org.postgresql.Driver</driver>
-    <DBUrl>jdbc:postgresql://localhost:5436/tpcc</DBUrl>
+    <DBUrl>jdbc:postgresql://localhost:5435/tpcc</DBUrl>
     <DBName>tpcc</DBName>
     <username>postgres</username>
     <password>postgres</password>
@@ -17,13 +17,14 @@
         <transactiontypes>
         <transactiontype>
                 <name>Payment</name>
-                <id>-1</id>
+                <id>1</id>
         </transactiontype>
         </transactiontypes>
    
     <works>
         <work>
-          <time>10</time>
+           
+          <time>2</time>
           <rate>100</rate>
           <weights>100</weights>
         </work>
