@@ -6,6 +6,7 @@
     <DBName>tpcc</DBName>
     <username>postgres</username>
     <password>postgres</password>
+    <isolation>TRANSACTION_SERIALIZABLE</isolation>
     <terminals>10</terminals>
     
     <scalefactor>1</scalefactor>
@@ -57,21 +58,20 @@
 
         <works>
         <work>
-          <time>20</time>
-          <rate>100</rate>
-          <warmup>10</warmup>
+          <time>30</time>
+          <rate>300</rate>
           <active_terminals>10</active_terminals>
           <weights bench="tpcc">45, 43, 4, 4, 4, 0, 0, 0, 0, 0</weights>
         </work>
         <work>
           <time>700</time>
-          <rate>1</rate>
+          <rate>300</rate>
           <active_terminals>1</active_terminals> 
-	  <weights bench="tpcc">0, 0, 0, 0, 0, 100, 0, 0, 0, 0</weights>
+	  <weights bench="tpcc">0, 43, 4, 0, 0, 53, 0, 0, 0, 0</weights>
         </work>
         <work>
-          <time>20</time>
-          <rate>100</rate>
+          <time>30</time>
+          <rate>300</rate>
           <active_terminals>10</active_terminals> 
 	  <weights bench="tpcc">0, 43, 0, 0, 0, 0, 45, 4, 4, 4</weights>
         </work>
