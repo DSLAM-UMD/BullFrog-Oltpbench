@@ -62,6 +62,8 @@ public class DBWorkload {
     private static final String RATE_UNLIMITED = "unlimited";
     public static String DB_PORT_NUMBER = "5432";
     public static String DB_BINARY_PATH = "/home/gangliao/so-postgres/postgresql-11.0/dev/bin";
+    public static int MIGRATION_TXN_ID = -1;
+    public static boolean IS_MIGRATED = false;
     
     /**
      * @param args
@@ -146,6 +148,11 @@ public class DBWorkload {
                 "port",
                 true,
                 "The port number of postgres");
+        options.addOption(
+                null,
+                "migration",
+                true,
+                "migration transaction id");
 
         options.addOption("v", "verbose", false, "Display Messages");
         options.addOption("h", "help", false, "Print this help");
@@ -198,6 +205,9 @@ public class DBWorkload {
         // -------------------------------------------------------------------
         DB_PORT_NUMBER = argsLine.getOptionValue("port");
         DB_BINARY_PATH = argsLine.getOptionValue("path");
+        if (argsLine.hasOption("migration")) {
+            MIGRATION_TXN_ID = Integer.parseInt(argsLine.getOptionValue("migration"));
+        }
 
         String targetBenchmarks = argsLine.getOptionValue("b");
         

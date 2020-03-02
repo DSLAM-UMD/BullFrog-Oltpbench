@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedList;
 
+import com.oltpbenchmark.DBWorkload;
 import com.oltpbenchmark.types.State;
 import com.oltpbenchmark.util.QueueLimitException;
 import org.apache.log4j.Logger;
@@ -84,16 +85,15 @@ public class WorkloadState {
                    }
             else {
                 // Add the specified number of procedures to the end of the queue.
-                boolean flag = false;
                 int type = 0;
                 for (int i = 0; i < amount; ++i)
                     type = currentPhase.chooseTransaction();
-                    if (type != -1) {
+                    if (type != DBWorkload.MIGRATION_TXN_ID) {
                         workQueue.add(new SubmittedProcedure(type));
-                    } else if (type == -1 && !flag) {
+                    } else if (type == DBWorkload.MIGRATION_TXN_ID && !DBWorkload.IS_MIGRATED) {
                         // FIXME: migration (baseline) only once
                         workQueue.add(new SubmittedProcedure(type));
-                        flag = true;                       
+                        DBWorkload.IS_MIGRATED = true;                       
                     }
                }
 

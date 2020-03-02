@@ -20,6 +20,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.Iterator;
 import java.util.ListIterator;
+
+import com.oltpbenchmark.DBWorkload;
+
 import java.util.List;
 import java.util.LinkedList;
 
@@ -167,12 +170,12 @@ public class TraceReader {
             {
                 break;
             }
-            if (curr.txnId != -1) {
+            if (curr.txnId != DBWorkload.MIGRATION_TXN_ID) {
                 readyProcedures.add(new SubmittedProcedure(curr.txnId, nowNs));
-            } else if (curr.txnId == -1 && !flag) {
+            } else if (curr.txnId == DBWorkload.MIGRATION_TXN_ID && !DBWorkload.IS_MIGRATED) {
                 // FIXME: migration (baseline) only once
                 readyProcedures.add(new SubmittedProcedure(curr.txnId, nowNs));
-                flag = true;                   
+                DBWorkload.IS_MIGRATED = true;                   
             }
             iter.remove();
         }
