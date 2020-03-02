@@ -84,8 +84,16 @@ public class WorkloadState {
                    }
             else {
                 // Add the specified number of procedures to the end of the queue.
+                boolean flag = false;
                 for (int i = 0; i < amount; ++i)
-                    workQueue.add(new SubmittedProcedure(currentPhase.chooseTransaction()));
+                    int type = currentPhase.chooseTransaction();
+                    if (type != -1) {
+                        workQueue.add(new SubmittedProcedure(type));
+                    } else if (type == -1 && !flag) {
+                        // FIXME: migration (baseline) only once
+                        workQueue.add(new SubmittedProcedure(type));
+                        flag = true;                       
+                    }
                }
 
             // Can't keep up with current rate? Remove the oldest transactions

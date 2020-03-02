@@ -159,6 +159,7 @@ public class TraceReader {
 
         // Loop through the procedures until we find one that's out of the
         // phase or within the current phase but beyond the time marker.
+        boolean flag = false;
         while (iter.hasNext()) {
             curr = iter.next();
             if (curr.phaseId != currentPhaseId
@@ -166,7 +167,13 @@ public class TraceReader {
             {
                 break;
             }
-            readyProcedures.add(new SubmittedProcedure(curr.txnId, nowNs));
+            if (curr.txnId != -1) {
+                readyProcedures.add(new SubmittedProcedure(curr.txnId, nowNs));
+            } else if (curr.txnId == -1 && !flag) {
+                // FIXME: migration (baseline) only once
+                readyProcedures.add(new SubmittedProcedure(curr.txnId, nowNs));
+                flag = true;                   
+            }
             iter.remove();
         }
 
