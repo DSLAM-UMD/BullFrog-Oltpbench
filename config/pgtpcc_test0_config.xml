@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<parameters>
+    <dbtype>postgres</dbtype>
+    <driver>org.postgresql.Driver</driver>
+    <DBUrl>jdbc:postgresql://localhost:5436/tpcc</DBUrl>
+    <DBName>tpcc</DBName>
+    <username>postgres</username>
+    <password>postgres</password>
+    <isolation>TRANSACTION_READ_COMMITTED</isolation>
+    <terminals>10</terminals>
+    
+    <scalefactor>1</scalefactor>
+    <uploadCode></uploadCode>
+    <uploadUrl></uploadUrl>
+    
+   
+        <transactiontypes>
+        <transactiontype>
+                <name>Payment</name>
+                <id>-1</id>
+        </transactiontype>
+        </transactiontypes>
+   
+    <works>
+        <work>
+          <time>10</time>
+          <rate>100</rate>
+          <weights>100</weights>
+        </work>
+        </works>
+
+</parameters>
