@@ -207,6 +207,7 @@ public class DBWorkload {
         DB_BINARY_PATH = argsLine.getOptionValue("path");
         if (argsLine.hasOption("migration")) {
             MIGRATION_TXN_ID = Integer.parseInt(argsLine.getOptionValue("migration"));
+            LOG.info("migration txn id: " + MIGRATION_TXN_ID);
         }
 
         String targetBenchmarks = argsLine.getOptionValue("b");
