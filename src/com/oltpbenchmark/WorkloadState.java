@@ -85,8 +85,9 @@ public class WorkloadState {
             else {
                 // Add the specified number of procedures to the end of the queue.
                 boolean flag = false;
+                int type = 0;
                 for (int i = 0; i < amount; ++i)
-                    int type = currentPhase.chooseTransaction();
+                    type = currentPhase.chooseTransaction();
                     if (type != -1) {
                         workQueue.add(new SubmittedProcedure(type));
                     } else if (type == -1 && !flag) {
