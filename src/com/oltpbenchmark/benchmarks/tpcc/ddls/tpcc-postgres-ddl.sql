@@ -195,14 +195,14 @@ CREATE TABLE orderline_stock (
 );
 
 CREATE INDEX FKEY_STOCK_2 ON STOCK (S_I_ID);
-CREATE INDEX s_order ON stock (s_w_id,s_quantity);
-CREATE INDEX s_order ON stock (s_w_id,s_i_id);
+CREATE INDEX s_order_1 ON stock (s_w_id, s_quantity);
+CREATE INDEX s_order_2 ON stock (s_w_id, s_i_id);
 
 CREATE INDEX FKEY_ORDER_LINE_2 ON ORDER_LINE (OL_I_ID);
-CREATE INDEX ol_order ON order_line (ol_o_id, ol_d_id, ol_w_id);
+CREATE INDEX ol_order_1 ON order_line (ol_o_id, ol_d_id, ol_w_id);
 
-CREATE INDEX ol_id_order ON orderline_stock (ol_o_id, ol_d_id, ol_w_id);
-CREATE INDEX ol_id_order ON orderline_stock (ol_o_id, ol_d_id, ol_w_id,s_w_id,s_quantity);
+CREATE INDEX os_order_1 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id);
+CREATE INDEX os_order_2 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id, s_w_id, s_quantity);
 
 CREATE OR REPLACE VIEW orderline_stock_v AS
 (
