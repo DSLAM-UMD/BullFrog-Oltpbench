@@ -74,19 +74,10 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
 
 	public final SQLStmt  stmtGetStockSQL = new SQLStmt(
 	        "SELECT S_QUANTITY, S_DATA, S_DIST_01, S_DIST_02, S_DIST_03, S_DIST_04, S_DIST_05, " +
-            "       S_DIST_06, S_DIST_07, S_DIST_08, S_DIST_09, S_DIST_10" +
+            "       S_DIST_06, S_DIST_07, S_DIST_08, S_DIST_09, S_DIST_10, S_YTD, S_ORDER_CNT, S_REMOTE_CNT " +
             "  FROM " + TPCCConstants.TABLENAME_STOCK + 
             " WHERE S_I_ID = ? " +
             "   AND S_W_ID = ? FOR UPDATE");
-
-	public final SQLStmt  stmtUpdateStockSQL = new SQLStmt(
-	        "UPDATE " + TPCCConstants.TABLENAME_STOCK + 
-	        "   SET S_QUANTITY = ? , " +
-            "       S_YTD = S_YTD + ?, " + 
-	        "       S_ORDER_CNT = S_ORDER_CNT + 1, " +
-            "       S_REMOTE_CNT = S_REMOTE_CNT + ? " +
-	        " WHERE S_I_ID = ? " +
-            "   AND S_W_ID = ?");
 
 	public final SQLStmt  stmtInsertOrderLineSQL = new SQLStmt(
 			"INSERT INTO " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
@@ -94,12 +85,7 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
 			"  s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
 			"  s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
-			"  SELECT ?,?,?,?,?,?,?,?,?, " +
-			"  	s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
-            "  	s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
-			"  	s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
-			"  FROM " + TPCCConstants.TABLENAME_STOCK +
-			"  WHERE s_i_id = ? AND s_w_id = ?");
+			"  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
 
 	// NewOrder Txn
@@ -111,7 +97,6 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
 	private PreparedStatement stmtInsertOOrder = null;
 	private PreparedStatement stmtGetItem = null;
 	private PreparedStatement stmtGetStock = null;
-	private PreparedStatement stmtUpdateStock = null;
 	private PreparedStatement stmtInsertOrderLine = null;
 
 
@@ -131,7 +116,6 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
 		stmtInsertOOrder =this.getPreparedStatement(conn, stmtInsertOOrderSQL);
 		stmtGetItem =this.getPreparedStatement(conn, stmtGetItemSQL);
 		stmtGetStock =this.getPreparedStatement(conn, stmtGetStockSQL);
-		stmtUpdateStock =this.getPreparedStatement(conn, stmtUpdateStockSQL);
 		stmtInsertOrderLine =this.getPreparedStatement(conn, stmtInsertOrderLineSQL);
 
 
@@ -182,6 +166,7 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
 		String c_last = null, c_credit = null, i_name, i_data, s_data;
 		String s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05;
 		String s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10, ol_dist_info = null;
+		int s_ytd, s_order_cnt, s_remote_cnt;
 		float[] itemPrices = new float[o_ol_cnt];
 		float[] orderLineAmounts = new float[o_ol_cnt];
 		String[] itemNames = new String[o_ol_cnt];
@@ -314,6 +299,9 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
 				s_dist_08 = rs.getString("S_DIST_08");
 				s_dist_09 = rs.getString("S_DIST_09");
 				s_dist_10 = rs.getString("S_DIST_10");
+				s_ytd = rs.getInt("S_YTD");
+				s_order_cnt = rs.getInt("S_ORDER_CNT");
+				s_remote_cnt = rs.getInt("S_REMOTE_CNT");
 				rs.close();
 				rs = null;
 
@@ -330,14 +318,6 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
 				} else {
 					s_remote_cnt_increment = 1;
 				}
-
-
-				stmtUpdateStock.setInt(1, s_quantity);
-				stmtUpdateStock.setInt(2, ol_quantity);
-				stmtUpdateStock.setInt(3, s_remote_cnt_increment);
-				stmtUpdateStock.setInt(4, ol_i_id);
-				stmtUpdateStock.setInt(5, ol_supply_w_id);
-				stmtUpdateStock.addBatch();
 
 				ol_amount = ol_quantity * i_price;
 				orderLineAmounts[ol_number - 1] = ol_amount;
@@ -392,14 +372,27 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
 				stmtInsertOrderLine.setInt(7, ol_quantity);
 				stmtInsertOrderLine.setDouble(8, ol_amount);
 				stmtInsertOrderLine.setString(9, ol_dist_info);
-				stmtInsertOrderLine.setInt(10, ol_i_id);
-				stmtInsertOrderLine.setInt(11, ol_supply_w_id);
+				stmtInsertOrderLine.setInt(10, ol_supply_w_id);
+				stmtInsertOrderLine.setInt(11, ol_i_id);
+				stmtInsertOrderLine.setInt(12, s_quantity);
+				stmtInsertOrderLine.setInt(13, s_ytd + ol_quantity);
+				stmtInsertOrderLine.setInt(14, s_order_cnt + 1);
+				stmtInsertOrderLine.setInt(15, s_remote_cnt + s_remote_cnt_increment);
+				stmtInsertOrderLine.setString(16, s_data);
+				stmtInsertOrderLine.setString(17, s_dist_01);
+				stmtInsertOrderLine.setString(18, s_dist_02);
+				stmtInsertOrderLine.setString(19, s_dist_03);
+				stmtInsertOrderLine.setString(20, s_dist_04);
+				stmtInsertOrderLine.setString(21, s_dist_05);
+				stmtInsertOrderLine.setString(22, s_dist_06);
+				stmtInsertOrderLine.setString(23, s_dist_07);
+				stmtInsertOrderLine.setString(24, s_dist_08);
+				stmtInsertOrderLine.setString(25, s_dist_09);
+				stmtInsertOrderLine.setString(26, s_dist_10);
 				stmtInsertOrderLine.addBatch();
-
 			} // end-for
 
 			stmtInsertOrderLine.executeBatch();
-			stmtUpdateStock.executeBatch();
 
 			total_amount *= (1 + w_tax + d_tax) * (1 - c_discount);
 		} catch(UserAbortException userEx)
@@ -410,8 +403,6 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
 	    finally {
             if (stmtInsertOrderLine != null)
                 stmtInsertOrderLine.clearBatch();
-              if (stmtUpdateStock != null)
-                stmtUpdateStock.clearBatch();
         }
 
 	}
