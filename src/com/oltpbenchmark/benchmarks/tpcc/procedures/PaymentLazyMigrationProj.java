@@ -67,7 +67,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
 			"  and c_d_id = {1,number,#}" +
             "  and c_id = {2,number,#};"
 			+
-			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
+			"migrate insert into customer_proj(" +
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data) " +
@@ -75,7 +75,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
-            " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+            " from customer) " +
             "on conflict (c_w_id,c_d_id,c_id) do nothing;";
 
     public SQLStmt payGetCustSQL = new SQLStmt(
@@ -118,7 +118,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             "  and c_d_id = {1,number,#}" +
             "  and c_last = ''{2}'';"
 			+
-			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
+			"migrate insert into customer_proj(" +
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data) " +
@@ -126,7 +126,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
-            " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+            " from customer) " +
             "on conflict (c_w_id,c_d_id,c_id) do nothing;";
 
     public SQLStmt customerByNameSQL = new SQLStmt(

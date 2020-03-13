@@ -84,7 +84,7 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 			"  and c_d_id = {1,number,#}" +
 			"  and c_id = {2,number,#}; "
 			+
-			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
+			"migrate insert into customer_proj(" +
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data) " +
@@ -92,7 +92,7 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
-            "from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+            "from customer) " +
 	        "on conflict (c_w_id,c_d_id,c_id) " +
             "do update set c_balance = customer_proj.c_balance + {3,number,#}," +
             " c_delivery_cnt = customer_proj.c_delivery_cnt + 1;";
