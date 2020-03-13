@@ -92,12 +92,10 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
-            " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+            "from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
 	        "on conflict (c_w_id,c_d_id,c_id) " +
-            "do update set c_balance = c_balance + {3,number,#}, c_delivery_cnt = c_delivery_cnt + 1 " +
-			"where c_w_id = {4,number,#}" +
-			"  and c_d_id = {5,number,#}" +
-			"  and c_id = {6,number,#};";
+            "do update set c_balance = customer_proj.c_balance + {3,number,#}," +
+            " c_delivery_cnt = customer_proj.c_delivery_cnt + 1;";
 
 
 	// Delivery Txn
@@ -107,8 +105,6 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 	private PreparedStatement delivUpdateCarrierId = null;
 	private PreparedStatement delivUpdateDeliveryDate = null;
 	private PreparedStatement delivSumOrderAmount = null;
-	private PreparedStatement delivUpdateCustBalDelivCnt = null;
-
 
     public ResultSet run(Connection conn, Random gen,
 			int w_id, int numWarehouses,
@@ -125,7 +121,6 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 		delivUpdateCarrierId = this.getPreparedStatement(conn, delivUpdateCarrierIdSQL);
 		delivUpdateDeliveryDate = this.getPreparedStatement(conn, delivUpdateDeliveryDateSQL);
 		delivSumOrderAmount = this.getPreparedStatement(conn, delivSumOrderAmountSQL);
-		delivUpdateCustBalDelivCnt = this.getPreparedStatement(conn, delivUpdateCustBalDelivCntSQL);
 
 		int d_id, c_id;
         float ol_total = 0;
@@ -233,10 +228,10 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 
             // migration txn
             String migration = MessageFormat.format(migrateFormat,
-                w_id, d_id, c_id, ol_total, w_id, d_id, c_id);
+                w_id, d_id, c_id, ol_total);
             // LOG.info(migration);
             String[] command = {"/bin/sh", "-c",
-                "echo '" + migration + "' | " +
+                "echo \"" + migration + "\" | " +
                 DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
                 DBWorkload.DB_PORT_NUMBER + " tpcc"};
             execCommands(command);

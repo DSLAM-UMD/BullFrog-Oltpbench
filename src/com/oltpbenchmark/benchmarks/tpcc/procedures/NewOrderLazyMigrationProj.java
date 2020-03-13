@@ -41,18 +41,18 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			"explain select count(*) from customer_proj_v " +
 			"where c_w_id = {0,number,#}" +
 			"  and c_d_id = {1,number,#}" +
-			"  and c_id = {2,number,#}; "
+			"  and c_id = {2,number,#};"
 			+
 			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
-			"c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-			"c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-			"c_city, c_state, c_zip, c_data) " +
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data) " +
 			"(select " +
-			"c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-			"c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-			"c_city, c_state, c_zip, c_data " +
-			"from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
-			"on conflict (c_w_id,c_d_id,c_id) do nothing";
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data " +
+			" from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+			"on conflict (c_w_id,c_d_id,c_id) do nothing;";
 
 	public final SQLStmt stmtGetCustSQL = new SQLStmt(
 			"SELECT C_DISCOUNT, C_LAST, C_CREDIT" +
@@ -205,12 +205,12 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		
 		try {
 			String migration = MessageFormat.format(getCustFormat, w_id, d_id, c_id);
-			// LOG.info(migration);
 			String[] command = {"/bin/sh", "-c",
-				"echo '" + migration + "' | " +
+				"echo \"" + migration + "\" | " +
 				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
 				DBWorkload.DB_PORT_NUMBER + " tpcc"};
 			execCommands(command);
+			// LOG.info(migration);
 
 			stmtGetCust.setInt(1, w_id);
 			stmtGetCust.setInt(2, d_id);

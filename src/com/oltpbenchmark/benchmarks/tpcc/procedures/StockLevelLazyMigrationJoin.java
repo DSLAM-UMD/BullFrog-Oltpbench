@@ -114,7 +114,7 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
             w_id, d_id, o_id, o_id - 20, w_id, threshold);
         // LOG.info(migration);
         String[] command = {"/bin/sh", "-c",
-            "echo '" + migration + "' | " +
+            "echo \"" + migration + "\" | " +
             DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
             DBWorkload.DB_PORT_NUMBER + " tpcc"};
         execCommands(command);
