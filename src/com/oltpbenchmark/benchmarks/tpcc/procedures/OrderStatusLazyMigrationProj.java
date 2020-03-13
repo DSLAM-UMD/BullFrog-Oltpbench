@@ -145,7 +145,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             assert c_id <= 0;
             // TODO: This only needs c_balance, c_first, c_middle, c_id
             // only fetch those columns?
-			String migration = MessageFormat.format(payGetCustFormat, w_id, d_id, c_last);
+			String migration = MessageFormat.format(customerByNameFormat, w_id, d_id, c_last);
 			// LOG.info(migration);
 			String[] command = {"/bin/sh", "-c",
 				"echo '" + migration + "' | " +
@@ -155,7 +155,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             c = getCustomerByName(w_id, d_id, c_last);
         } else {
             assert c_last == null;
-			String migration = MessageFormat.format(customerByNameFormat, w_id, d_id, c_id);
+			String migration = MessageFormat.format(payGetCustFormat, w_id, d_id, c_id);
 			// LOG.info(migration);
 			String[] command = {"/bin/sh", "-c",
 				"echo '" + migration + "' | " +

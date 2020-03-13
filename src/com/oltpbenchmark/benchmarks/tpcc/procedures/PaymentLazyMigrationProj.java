@@ -22,9 +22,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.text.MessageFormat;
 
 import org.apache.log4j.Logger;
 
+import com.oltpbenchmark.DBWorkload;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
@@ -37,72 +39,101 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
     private static final Logger LOG = Logger.getLogger(PaymentLazyMigrationProj.class);
 
     public SQLStmt payUpdateWhseSQL = new SQLStmt(
-            "UPDATE " + TPCCConstants.TABLENAME_WAREHOUSE +
+            "UPDATE " + TPCCConstants.TABLENAME_WAREHOUSE + 
             "   SET W_YTD = W_YTD + ? " +
             " WHERE W_ID = ? ");
-
+    
     public SQLStmt payGetWhseSQL = new SQLStmt(
-            "SELECT W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP, W_NAME" +
-            "  FROM " + TPCCConstants.TABLENAME_WAREHOUSE +
+            "SELECT W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP, W_NAME" + 
+            "  FROM " + TPCCConstants.TABLENAME_WAREHOUSE + 
             " WHERE W_ID = ?");
-
+    
     public SQLStmt payUpdateDistSQL = new SQLStmt(
-            "UPDATE " + TPCCConstants.TABLENAME_DISTRICT +
+            "UPDATE " + TPCCConstants.TABLENAME_DISTRICT + 
             "   SET D_YTD = D_YTD + ? " +
             " WHERE D_W_ID = ? " +
             "   AND D_ID = ?");
-
+    
     public SQLStmt payGetDistSQL = new SQLStmt(
-            "SELECT D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP, D_NAME" +
-            "  FROM " + TPCCConstants.TABLENAME_DISTRICT +
+            "SELECT D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP, D_NAME" + 
+            "  FROM " + TPCCConstants.TABLENAME_DISTRICT + 
             " WHERE D_W_ID = ? " +
             "   AND D_ID = ?");
 
+    String payGetCustFormat =
+			"migrate 1 customer " +
+			"explain select count(*) from customer_proj_v" +
+			"where (c_w_id = {0,number,#}" +
+			"  and c_d_id = {1,number,#}" +
+            "  and c_id = {2,number,#});"
+			+
+			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data) " +
+			"(select " +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data " +
+            " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+            "on conflict (c_w_id,c_d_id,c_id) do nothing;";
+
     public SQLStmt payGetCustSQL = new SQLStmt(
-            "SELECT C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, " +
-            "       C_CITY, C_STATE, C_ZIP, C_PHONE, C_CREDIT, C_CREDIT_LIM, " +
-            "       C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_SINCE " +
-            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER +
+            "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
+            "       C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
+            "       C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
+            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
             "   AND C_ID = ?");
-
-    public SQLStmt payGetCustCdataSQL = new SQLStmt(
-            "SELECT C_DATA " +
-            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER +
-            " WHERE C_W_ID = ? " +
-            "   AND C_D_ID = ? " +
-            "   AND C_ID = ?");
-
+    
     public SQLStmt payUpdateCustBalCdataSQL = new SQLStmt(
-            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER +
+            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             "   SET C_BALANCE = ?, " +
-            "       C_YTD_PAYMENT = ?, " +
+            "       C_YTD_PAYMENT = ?, " + 
             "       C_PAYMENT_CNT = ?, " +
             "       C_DATA = ? " +
             " WHERE C_W_ID = ? " +
-            "   AND C_D_ID = ? " +
+            "   AND C_D_ID = ? " + 
             "   AND C_ID = ?");
-
+    
     public SQLStmt payUpdateCustBalSQL = new SQLStmt(
-            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER +
+            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             "   SET C_BALANCE = ?, " +
             "       C_YTD_PAYMENT = ?, " +
             "       C_PAYMENT_CNT = ? " +
-            " WHERE C_W_ID = ? " +
-            "   AND C_D_ID = ? " +
+            " WHERE C_W_ID = ? " + 
+            "   AND C_D_ID = ? " + 
             "   AND C_ID = ?");
-
+    
     public SQLStmt payInsertHistSQL = new SQLStmt(
-            "INSERT INTO " + TPCCConstants.TABLENAME_HISTORY +
+            "INSERT INTO " + TPCCConstants.TABLENAME_HISTORY + 
             " (H_C_D_ID, H_C_W_ID, H_C_ID, H_D_ID, H_W_ID, H_DATE, H_AMOUNT, H_DATA) " +
             " VALUES (?,?,?,?,?,?,?,?)");
 
+    String customerByNameFormat =
+			"migrate 1 customer " +
+			"explain select count(*) from customer_proj_v " +
+			"where (c_w_id = {0,number,#}" +
+            "  and c_d_id = {1,number,#}" +
+            "  and c_last = {2});"
+			+
+			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data) " +
+			"(select " +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data " +
+            " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+            "on conflict (c_w_id,c_d_id,c_id) do nothing;";
+
     public SQLStmt customerByNameSQL = new SQLStmt(
-            "SELECT C_FIRST, C_MIDDLE, C_ID, C_STREET_1, C_STREET_2, C_CITY, " +
-            "       C_STATE, C_ZIP, C_PHONE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, " +
-            "       C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_SINCE " +
-            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER +
+            "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
+            "  C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
+            "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
+            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
             "   AND C_LAST = ? " +
@@ -114,7 +145,6 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
     private PreparedStatement payUpdateDist = null;
     private PreparedStatement payGetDist = null;
     private PreparedStatement payGetCust = null;
-    private PreparedStatement payGetCustCdata = null;
     private PreparedStatement payUpdateCustBalCdata = null;
     private PreparedStatement payUpdateCustBal = null;
     private PreparedStatement payInsertHist = null;
@@ -130,7 +160,6 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
         payUpdateDist = this.getPreparedStatement(conn, payUpdateDistSQL);
         payGetDist = this.getPreparedStatement(conn, payGetDistSQL);
         payGetCust = this.getPreparedStatement(conn, payGetCustSQL);
-        payGetCustCdata = this.getPreparedStatement(conn, payGetCustCdataSQL);
         payUpdateCustBalCdata = this.getPreparedStatement(conn, payUpdateCustBalCdataSQL);
         payUpdateCustBal = this.getPreparedStatement(conn, payUpdateCustBalSQL);
         payInsertHist = this.getPreparedStatement(conn, payInsertHistSQL);
@@ -218,9 +247,25 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
         Customer c;
         if (customerByName) {
             assert customerID <= 0;
+            String migration = MessageFormat.format(customerByNameFormat,
+                customerWarehouseID, customerDistrictID, customerLastName);
+			// LOG.info(migration);
+			String[] command = {"/bin/sh", "-c",
+				"echo '" + migration + "' | " +
+				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
+				DBWorkload.DB_PORT_NUMBER + " tpcc"};
+			execCommands(command);
             c = getCustomerByName(customerWarehouseID, customerDistrictID, customerLastName);
         } else {
             assert customerLastName == null;
+            String migration = MessageFormat.format(payGetCustFormat,
+                customerWarehouseID, customerDistrictID, customerID);
+			// LOG.info(migration);
+			String[] command = {"/bin/sh", "-c",
+				"echo '" + migration + "' | " +
+				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
+				DBWorkload.DB_PORT_NUMBER + " tpcc"};
+			execCommands(command);
             c = getCustomerById(customerWarehouseID, customerDistrictID, customerID, conn);
         }
 
@@ -229,17 +274,8 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
         c.c_payment_cnt += 1;
         String c_data = null;
         if (c.c_credit.equals("BC")) { // bad credit
-            payGetCustCdata.setInt(1, customerWarehouseID);
-            payGetCustCdata.setInt(2, customerDistrictID);
-            payGetCustCdata.setInt(3, c.c_id);
-            rs = payGetCustCdata.executeQuery();
-            if (!rs.next())
-                throw new RuntimeException("C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID + " not found!");
-            c_data = rs.getString("C_DATA");
-            rs.close();
             rs = null;
-
-            c_data = c.c_id + " " + customerDistrictID + " " + customerWarehouseID + " " + districtID + " " + w_id + " " + paymentAmount + " | " + c_data;
+            c_data = c.c_id + " " + customerDistrictID + " " + customerWarehouseID + " " + districtID + " " + w_id + " " + paymentAmount + " | " + c.c_data;
             if (c_data.length() > 500)
                 c_data = c_data.substring(0, 500);
 
@@ -382,7 +418,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             throw new RuntimeException("C_ID=" + c_id + " C_D_ID=" + c_d_id + " C_W_ID=" + c_w_id + " not found!");
         }
 
-        Customer c = TPCCUtil.newCustomerFromResults(rs);
+        Customer c = TPCCUtil.newCustomerFromResults2(rs);
         c.c_id = c_id;
         c.c_last = rs.getString("C_LAST");
         rs.close();
@@ -401,7 +437,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
         if (LOG.isTraceEnabled()) LOG.trace("C_LAST=" + customerLastName + " C_D_ID=" + c_d_id + " C_W_ID=" + c_w_id);
 
         while (rs.next()) {
-            Customer c = TPCCUtil.newCustomerFromResults(rs);
+            Customer c = TPCCUtil.newCustomerFromResults2(rs);
             c.c_id = rs.getInt("C_ID");
             c.c_last = customerLastName;
             customers.add(c);

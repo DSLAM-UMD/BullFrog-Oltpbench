@@ -65,6 +65,22 @@ public class TPCCUtil {
 		c.c_since = rs.getTimestamp("c_since");
 		return c;
 	}
+	public static Customer newCustomerFromResults2(ResultSet rs)
+			throws SQLException {
+		Customer c = new Customer();
+		// TODO: Use column indices: probably faster?
+		c.c_first = rs.getString("c_first");
+		c.c_street_1 = rs.getString("c_street_1");
+		c.c_city = rs.getString("c_city");
+		c.c_state = rs.getString("c_state");
+		c.c_zip = rs.getString("c_zip");
+		c.c_credit = rs.getString("c_credit");
+		c.c_balance = rs.getFloat("c_balance");
+		c.c_ytd_payment = rs.getFloat("c_ytd_payment");
+		c.c_payment_cnt = rs.getInt("c_payment_cnt");
+		c.c_data = rs.getString("c_data");
+		return c;
+	}
 	private static final RandomGenerator ran = new RandomGenerator(0);
 
 	public static String randomStr(int strLen) {
