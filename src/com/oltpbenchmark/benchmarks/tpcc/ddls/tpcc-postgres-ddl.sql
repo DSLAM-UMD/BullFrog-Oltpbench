@@ -159,7 +159,7 @@ ALTER TABLE order_line ADD CONSTRAINT fkey_order_line_2 FOREIGN KEY(ol_supply_w_
 ALTER TABLE stock ADD CONSTRAINT fkey_stock_1 FOREIGN KEY(s_w_id) REFERENCES warehouse(w_id) ON DELETE CASCADE;
 ALTER TABLE stock ADD CONSTRAINT fkey_stock_2 FOREIGN KEY(s_i_id) REFERENCES item(i_id) ON DELETE CASCADE;
 
--- add migration
+-- join migration
 DROP TABLE IF EXISTS orderline_stock CASCADE;
 CREATE TABLE orderline_stock (
   ol_w_id int NOT NULL,
@@ -210,3 +210,32 @@ CREATE OR REPLACE VIEW orderline_stock_v AS
   WHERE ol_i_id = s_i_id
 );
 
+-- projection migration
+DROP TABLE IF EXISTS customer_proj CASCADE;
+CREATE TABLE customer_proj (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_discount decimal(4,4) NOT NULL,
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_balance decimal(12,2) NOT NULL,
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_data varchar(500) NOT NULL,
+  PRIMARY KEY (c_w_id,c_d_id,c_id)
+);
+
+CREATE OR REPLACE VIEW customer_proj_v AS
+(
+  SELECT c_w_id, c_d_id, c_id, c_credit, c_last,
+  c_first, c_balance, c_ytd_payment, c_payment_cnt,
+  c_delivery_cnt, c_street_1, c_city, c_state, c_zip, c_data
+  FROM customer
+);

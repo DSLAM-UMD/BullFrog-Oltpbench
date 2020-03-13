@@ -28,4 +28,7 @@ public abstract class TPCCConstants {
     public static final String TABLENAME_NEWORDER = "NEW_ORDER";
     // migration
     public static final String TABLENAME_ORDERLINE_STOCK = "ORDERLINE_STOCK";
+
+    // projection migration
+    public static final String TABLENAME_CUSTOMER_PROJ = "CUSTOMER_PROJ";
 }
