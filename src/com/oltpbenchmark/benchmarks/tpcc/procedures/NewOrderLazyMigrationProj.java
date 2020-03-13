@@ -38,7 +38,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 
     String getCustFormat =
 			"migrate 1 customer " +
-			"explain select count(*) from customer_proj_v" +
+			"explain select count(*) from customer_proj_v " +
 			"where c_w_id = {0,number,#}" +
 			"  and c_d_id = {1,number,#}" +
 			"  and c_id = {2,number,#}; "
@@ -51,7 +51,8 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			"c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
 			"c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"c_city, c_state, c_zip, c_data " +
-			"from " + TPCCConstants.TABLENAME_CUSTOMER + "); ";
+			"from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+			"on conflict (c_w_id,c_d_id,c_id) do nothing";
 
 	public final SQLStmt stmtGetCustSQL = new SQLStmt(
 			"SELECT C_DISCOUNT, C_LAST, C_CREDIT" +

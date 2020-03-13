@@ -40,58 +40,72 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
 
 	public SQLStmt ordStatGetNewestOrdSQL = new SQLStmt(
 	        "SELECT O_ID, O_CARRIER_ID, O_ENTRY_D " +
-            "  FROM " + TPCCConstants.TABLENAME_OPENORDER +
-            " WHERE O_W_ID = ? " +
-            "   AND O_D_ID = ? " +
+            "  FROM " + TPCCConstants.TABLENAME_OPENORDER + 
+            " WHERE O_W_ID = ? " + 
+            "   AND O_D_ID = ? " + 
             "   AND O_C_ID = ? " +
             " ORDER BY O_ID DESC LIMIT 1");
 
-    String txnFormat =
-            "migrate 2 order_line stock " +
-            " explain select count(*) from orderline_stock_v " +
-            " where ol_o_id = {0,number,#} " +
-            "   and ol_d_id = {1,number,#} " +
-            "   and ol_w_id = {2,number,#}; "
-            +
-            "migrate insert into orderline_stock(" +
-            " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
-            " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
-            " s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
-            " s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
-            " (select " +
-            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
-            "  s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
-            "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
-            "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
-            "  from order_line, stock " +
-            "  where ol_i_id = s_i_id); ";
-
 	public SQLStmt ordStatGetOrderLinesSQL = new SQLStmt(
-	        "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D " +
-            "  FROM " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
-            " WHERE OL_O_ID = ?" +
-            "   AND OL_D_ID = ?" +
+	        "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D " + 
+            "  FROM " + TPCCConstants.TABLENAME_ORDERLINE + 
+            " WHERE OL_O_ID = ?" + 
+            "   AND OL_D_ID = ?" + 
             "   AND OL_W_ID = ?");
 
+    String payGetCustFormat =
+			"migrate 1 customer " +
+			"explain select count(*) from customer_proj_v" +
+			"where (c_w_id = {0,number,#}" +
+			"  and c_d_id = {1,number,#}" +
+            "  and c_id = {2,number,#});"
+			+
+			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data) " +
+			"(select " +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data " +
+            " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+            "on conflict (c_w_id,c_d_id,c_id) do nothing;";
+
 	public SQLStmt payGetCustSQL = new SQLStmt(
-	        "SELECT C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, " +
-            "       C_CITY, C_STATE, C_ZIP, C_PHONE, C_CREDIT, C_CREDIT_LIM, " +
+	        "SELECT C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, " + 
+            "       C_CITY, C_STATE, C_ZIP, C_PHONE, C_CREDIT, C_CREDIT_LIM, " + 
             "       C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_SINCE " +
-            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER +
+            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
             "   AND C_ID = ?");
 
+    String customerByNameFormat =
+			"migrate 1 customer " +
+			"explain select count(*) from customer_proj_v " +
+			"where (c_w_id = {0,number,#}" +
+            "  and c_d_id = {1,number,#}" +
+            "  and c_last = {2});"
+			+
+			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data) " +
+			"(select " +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data " +
+            " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+            "on conflict (c_w_id,c_d_id,c_id) do nothing;";
+
 	public SQLStmt customerByNameSQL = new SQLStmt(
-	        "SELECT C_FIRST, C_MIDDLE, C_ID, C_STREET_1, C_STREET_2, C_CITY, " +
+	        "SELECT C_FIRST, C_MIDDLE, C_ID, C_STREET_1, C_STREET_2, C_CITY, " + 
             "       C_STATE, C_ZIP, C_PHONE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, " +
             "       C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_SINCE " +
-            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER +
+            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
-            "   AND C_LAST = ? " +
+            "   AND C_LAST = ? " + 
             " ORDER BY C_FIRST");
 
 	private PreparedStatement ordStatGetNewestOrd = null;
@@ -102,7 +116,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
 
     public ResultSet run(Connection conn, Random gen, int w_id, int numWarehouses, int terminalDistrictLowerID, int terminalDistrictUpperID, TPCCWorker w) throws SQLException {
         boolean trace = LOG.isTraceEnabled();
-
+        
         // initializing all prepared statements
         payGetCust = this.getPreparedStatement(conn, payGetCustSQL);
         customerByName = this.getPreparedStatement(conn, customerByNameSQL);
@@ -131,9 +145,23 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             assert c_id <= 0;
             // TODO: This only needs c_balance, c_first, c_middle, c_id
             // only fetch those columns?
+			String migration = MessageFormat.format(payGetCustFormat, w_id, d_id, c_last);
+			// LOG.info(migration);
+			String[] command = {"/bin/sh", "-c",
+				"echo '" + migration + "' | " +
+				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
+				DBWorkload.DB_PORT_NUMBER + " tpcc"};
+			execCommands(command);
             c = getCustomerByName(w_id, d_id, c_last);
         } else {
             assert c_last == null;
+			String migration = MessageFormat.format(customerByNameFormat, w_id, d_id, c_id);
+			// LOG.info(migration);
+			String[] command = {"/bin/sh", "-c",
+				"echo '" + migration + "' | " +
+				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
+				DBWorkload.DB_PORT_NUMBER + " tpcc"};
+			execCommands(command);
             c = getCustomerById(w_id, d_id, c_id, conn);
         }
 
@@ -158,16 +186,6 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
         o_carrier_id = rs.getInt("O_CARRIER_ID");
         o_entry_d = rs.getTimestamp("O_ENTRY_D");
         rs.close();
-
-        // migration txn
-        String migration = MessageFormat.format(txnFormat,
-            o_id, d_id, w_id);
-        // LOG.info(migration);
-        String[] command = {"/bin/sh", "-c",
-            "echo '" + migration + "' | " +
-            DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-            DBWorkload.DB_PORT_NUMBER + " tpcc"};
-        execCommands(command);
 
         // retrieve the order lines for the most recent order
         ordStatGetOrderLines.setInt(1, o_id);
@@ -200,7 +218,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
 
         // commit the transaction
         conn.commit();
-
+        
         if (orderLines.isEmpty()) {
             String msg = String.format("Order record had no order line items [C_W_ID=%d, C_D_ID=%d, C_ID=%d, O_ID=%d]",
                                        w_id, d_id, c.c_id, o_id);
@@ -252,7 +270,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             sb.append("+-----------------------------------------------------------------+\n\n");
             LOG.trace(sb.toString());
         }
-
+        
         return null;
     }
 
@@ -321,3 +339,6 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
 
 
 }
+
+
+

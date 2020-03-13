@@ -79,7 +79,7 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 
     String migrateFormat =
 			"migrate 1 customer " +
-			"explain select count(*) from customer_proj_v" +
+			"explain select count(*) from customer_proj_v " +
 			"where c_w_id = {0,number,#}" +
 			"  and c_d_id = {1,number,#}" +
 			"  and c_id = {2,number,#}; "
