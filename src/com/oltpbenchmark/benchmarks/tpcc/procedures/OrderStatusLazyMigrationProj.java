@@ -61,20 +61,20 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             "  and c_id = {2,number,#});"
 			+
 			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
-			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data) " +
 			"(select " +
-			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
             " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
             "on conflict (c_w_id,c_d_id,c_id) do nothing;";
 
 	public SQLStmt payGetCustSQL = new SQLStmt(
-	        "SELECT C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, " + 
-            "       C_CITY, C_STATE, C_ZIP, C_PHONE, C_CREDIT, C_CREDIT_LIM, " + 
-            "       C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_SINCE " +
+            "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
+            "  C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
+            "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
             "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
@@ -88,21 +88,21 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             "  and c_last = {2});"
 			+
 			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
-			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data) " +
 			"(select " +
-			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
             " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
             "on conflict (c_w_id,c_d_id,c_id) do nothing;";
 
 	public SQLStmt customerByNameSQL = new SQLStmt(
-	        "SELECT C_FIRST, C_MIDDLE, C_ID, C_STREET_1, C_STREET_2, C_CITY, " + 
-            "       C_STATE, C_ZIP, C_PHONE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, " +
-            "       C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_SINCE " +
-            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
+            "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
+            "  C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
+            "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
+            " FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
             "   AND C_LAST = ? " + 
@@ -240,8 +240,6 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             sb.append("\n   Name:    ");
             sb.append(c.c_first);
             sb.append(" ");
-            sb.append(c.c_middle);
-            sb.append(" ");
             sb.append(c.c_last);
             sb.append("\n   Balance: ");
             sb.append(c.c_balance);
@@ -292,7 +290,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             throw new RuntimeException(msg);
         }
 
-        Customer c = TPCCUtil.newCustomerFromResults(rs);
+        Customer c = TPCCUtil.newCustomerFromResults2(rs);
         c.c_id = c_id;
         c.c_last = rs.getString("C_LAST");
         rs.close();
@@ -313,7 +311,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
         if (trace) LOG.trace("customerByName END");
 
         while (rs.next()) {
-            Customer c = TPCCUtil.newCustomerFromResults(rs);
+            Customer c = TPCCUtil.newCustomerFromResults2(rs);
             c.c_id = rs.getInt("C_ID");
             c.c_last = c_last;
             customers.add(c);

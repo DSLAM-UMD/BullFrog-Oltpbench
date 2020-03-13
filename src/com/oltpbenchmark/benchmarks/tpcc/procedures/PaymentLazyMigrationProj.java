@@ -68,11 +68,11 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             "  and c_id = {2,number,#});"
 			+
 			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
-			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data) " +
 			"(select " +
-			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
             " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
@@ -119,11 +119,11 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             "  and c_last = {2});"
 			+
 			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
-			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data) " +
 			"(select " +
-			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
             " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
@@ -357,13 +357,9 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             terminalMessage.append("\n   Name:    ");
             terminalMessage.append(c.c_first);
             terminalMessage.append(" ");
-            terminalMessage.append(c.c_middle);
-            terminalMessage.append(" ");
             terminalMessage.append(c.c_last);
             terminalMessage.append("\n   Street:  ");
             terminalMessage.append(c.c_street_1);
-            terminalMessage.append("\n   Street:  ");
-            terminalMessage.append(c.c_street_2);
             terminalMessage.append("\n   City:    ");
             terminalMessage.append(c.c_city);
             terminalMessage.append("   State: ");
@@ -380,12 +376,8 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             terminalMessage.append(c.c_credit);
             terminalMessage.append("\n   %Disc:   ");
             terminalMessage.append(c.c_discount);
-            terminalMessage.append("\n   Phone:   ");
-            terminalMessage.append(c.c_phone);
             terminalMessage.append("\n\n Amount Paid:      ");
             terminalMessage.append(paymentAmount);
-            terminalMessage.append("\n Credit Limit:     ");
-            terminalMessage.append(c.c_credit_lim);
             terminalMessage.append("\n New Cust-Balance: ");
             terminalMessage.append(c.c_balance);
             if (c.c_credit.equals("BC")) {
