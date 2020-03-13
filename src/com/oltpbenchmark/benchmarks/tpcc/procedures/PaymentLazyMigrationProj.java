@@ -63,9 +63,9 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
     String payGetCustFormat =
 			"migrate 1 customer " +
 			"explain select count(*) from customer_proj_v " +
-			"where (c_w_id = {0,number,#}" +
+			"where c_w_id = {0,number,#}" +
 			"  and c_d_id = {1,number,#}" +
-            "  and c_id = {2,number,#});"
+            "  and c_id = {2,number,#};"
 			+
 			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
