@@ -145,8 +145,6 @@ CREATE TABLE warehouse (
 CREATE INDEX idx_customer_name ON customer (c_w_id,c_d_id,c_last,c_first);
 CREATE INDEX idx_order ON oorder (o_w_id,o_d_id,o_c_id,o_id);
 -- tpcc-mysql create two indexes for the foreign key constraints, Is it really necessary?
--- CREATE INDEX FKEY_STOCK_2 ON STOCK (S_I_ID);
--- CREATE INDEX FKEY_ORDER_LINE_2 ON ORDER_LINE (OL_SUPPLY_W_ID,OL_I_ID);
 
 --add 'ON DELETE CASCADE'  to clear table work correctly
 
@@ -161,7 +159,7 @@ ALTER TABLE order_line ADD CONSTRAINT fkey_order_line_2 FOREIGN KEY(ol_supply_w_
 ALTER TABLE stock ADD CONSTRAINT fkey_stock_1 FOREIGN KEY(s_w_id) REFERENCES warehouse(w_id) ON DELETE CASCADE;
 ALTER TABLE stock ADD CONSTRAINT fkey_stock_2 FOREIGN KEY(s_i_id) REFERENCES item(i_id) ON DELETE CASCADE;
 
--- add migration
+-- join migration
 DROP TABLE IF EXISTS orderline_stock CASCADE;
 CREATE TABLE orderline_stock (
   ol_w_id int NOT NULL,
@@ -191,8 +189,19 @@ CREATE TABLE orderline_stock (
   s_dist_07 char(24) NOT NULL,
   s_dist_08 char(24) NOT NULL,
   s_dist_09 char(24) NOT NULL,
-  s_dist_10 char(24) NOT NULL
+  s_dist_10 char(24) NOT NULL,
+  PRIMARY KEY (ol_w_id,ol_d_id,ol_o_id,ol_number)
 );
+
+CREATE INDEX FKEY_STOCK_2 ON STOCK (S_I_ID);
+CREATE INDEX s_order_1 ON stock (s_w_id, s_quantity);
+CREATE INDEX s_order_2 ON stock (s_w_id, s_i_id);
+
+CREATE INDEX FKEY_ORDER_LINE_2 ON ORDER_LINE (OL_I_ID);
+CREATE INDEX ol_order_1 ON order_line (ol_o_id, ol_d_id, ol_w_id);
+
+CREATE INDEX os_order_1 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id);
+-- CREATE INDEX os_order_2 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id, s_w_id, s_quantity);
 
 CREATE OR REPLACE VIEW orderline_stock_v AS
 (
@@ -218,7 +227,8 @@ CREATE TABLE customer_proj (
   c_city varchar(20) NOT NULL,
   c_state char(2) NOT NULL,
   c_zip char(9) NOT NULL,
-  c_data varchar(500) NOT NULL
+  c_data varchar(500) NOT NULL,
+  PRIMARY KEY (c_w_id,c_d_id,c_id)
 );
 
 CREATE OR REPLACE VIEW customer_proj_v AS

@@ -1,5 +1,5 @@
 /******************************************************************************
- *  Copyright 2015 by OLTPBenchmark Project                                   *
+ *  Copyright 2020 by OLTPBenchmark Project                                   *
  *                                                                            *
  *  Licensed under the Apache License, Version 2.0 (the "License");           *
  *  you may not use this file except in compliance with the License.          *
@@ -37,48 +37,34 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
     private static final Logger LOG = Logger.getLogger(NewOrderLazyMigrationProj.class);
 
     String getCustFormat =
-          "migrate 1 customer " +
-          "explain select count(*) from customer_proj_v" +
-          "where c_w_id = {0,number,#}" +
-          "  and c_d_id = {1,number,#}" +
-          "  and c_id = {2,number,#}; "
-          +
-          "migrate insert into customer_proj(" +
-          "c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
-          "c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-          "c_city, c_state, c_zip, c_data) " +
-          "(select " +
-          "c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
-          "c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-          "c_city, c_state, c_zip, c_data " +
-          "from customer); ";
+			"migrate 1 customer " +
+			"explain select count(*) from customer_proj_v" +
+			"where c_w_id = {0,number,#}" +
+			"  and c_d_id = {1,number,#}" +
+			"  and c_id = {2,number,#}; "
+			+
+			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
+			"c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"c_city, c_state, c_zip, c_data) " +
+			"(select " +
+			"c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"c_city, c_state, c_zip, c_data " +
+			"from " + TPCCConstants.TABLENAME_CUSTOMER + "); ";
 
-
-    // String getCustFormat = "migrate 1 customer " +
-    //             "explain select count(*) from customer_proj_v " +
-    //             "where c_w_id = {0,number,#} and c_d_id = {1,number,#} and c_id = {2,number,#};"
-    //             +
-    //             "migrate insert into customer_proj(c_w_id, c_d_id, c_id, c_credit, c_last)";
-
-    // public final SQLStmt stmtGetCustSQL = new SQLStmt(
-    // 		"SELECT C_LAST, C_CREDIT" +
-	  //       "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
-	  //       " WHERE C_W_ID = ? " +
-	  //       "   AND C_D_ID = ? " +
-	  //       "   AND C_ID = ?");
-
-    public final SQLStmt stmtGetCustSQL = new SQLStmt(
-    		"SELECT C_DISCOUNT, C_LAST, C_CREDIT" +
-          "  FROM " + TPCCConstants.TABLENAME_CUSTOMER +
-          " WHERE C_W_ID = ? " +
-          "   AND C_D_ID = ? " +
-          "   AND C_ID = ?");
+	public final SQLStmt stmtGetCustSQL = new SQLStmt(
+			"SELECT C_DISCOUNT, C_LAST, C_CREDIT" +
+			"  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
+			" WHERE C_W_ID = ? " +
+			"   AND C_D_ID = ? " +
+			"   AND C_ID = ?");
 
     public final SQLStmt stmtGetWhseSQL = new SQLStmt(
-    		"SELECT W_TAX " +
-		    "  FROM " + TPCCConstants.TABLENAME_WAREHOUSE +
+    		"SELECT W_TAX " + 
+		    "  FROM " + TPCCConstants.TABLENAME_WAREHOUSE + 
 		    " WHERE W_ID = ?");
-
+    
     public final SQLStmt stmtGetDistSQL = new SQLStmt(
     		"SELECT D_NEXT_O_ID, D_TAX " +
 	        "  FROM " + TPCCConstants.TABLENAME_DISTRICT +
@@ -90,49 +76,41 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
             " VALUES ( ?, ?, ?)");
 
 	public final SQLStmt  stmtUpdateDistSQL = new SQLStmt(
-	        "UPDATE " + TPCCConstants.TABLENAME_DISTRICT +
+	        "UPDATE " + TPCCConstants.TABLENAME_DISTRICT + 
 	        "   SET D_NEXT_O_ID = D_NEXT_O_ID + 1 " +
             " WHERE D_W_ID = ? " +
 	        "   AND D_ID = ?");
 
 	public final SQLStmt  stmtInsertOOrderSQL = new SQLStmt(
-	        "INSERT INTO " + TPCCConstants.TABLENAME_OPENORDER +
-	        " (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_OL_CNT, O_ALL_LOCAL)" +
+	        "INSERT INTO " + TPCCConstants.TABLENAME_OPENORDER + 
+	        " (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_OL_CNT, O_ALL_LOCAL)" + 
             " VALUES (?, ?, ?, ?, ?, ?, ?)");
 
 	public final SQLStmt  stmtGetItemSQL = new SQLStmt(
 	        "SELECT I_PRICE, I_NAME , I_DATA " +
-            "  FROM " + TPCCConstants.TABLENAME_ITEM +
+            "  FROM " + TPCCConstants.TABLENAME_ITEM + 
             " WHERE I_ID = ?");
 
 	public final SQLStmt  stmtGetStockSQL = new SQLStmt(
 	        "SELECT S_QUANTITY, S_DATA, S_DIST_01, S_DIST_02, S_DIST_03, S_DIST_04, S_DIST_05, " +
             "       S_DIST_06, S_DIST_07, S_DIST_08, S_DIST_09, S_DIST_10" +
-            "  FROM " + TPCCConstants.TABLENAME_STOCK +
+            "  FROM " + TPCCConstants.TABLENAME_STOCK + 
             " WHERE S_I_ID = ? " +
             "   AND S_W_ID = ? FOR UPDATE");
 
 	public final SQLStmt  stmtUpdateStockSQL = new SQLStmt(
-	        "UPDATE " + TPCCConstants.TABLENAME_STOCK +
+	        "UPDATE " + TPCCConstants.TABLENAME_STOCK + 
 	        "   SET S_QUANTITY = ? , " +
-            "       S_YTD = S_YTD + ?, " +
+            "       S_YTD = S_YTD + ?, " + 
 	        "       S_ORDER_CNT = S_ORDER_CNT + 1, " +
             "       S_REMOTE_CNT = S_REMOTE_CNT + ? " +
 	        " WHERE S_I_ID = ? " +
             "   AND S_W_ID = ?");
 
 	public final SQLStmt  stmtInsertOrderLineSQL = new SQLStmt(
-			"INSERT INTO " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
-			" (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_dist_info, " +
-			"  s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
-            "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
-			"  s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
-			"  SELECT ?,?,?,?,?,?,?,?,?, " +
-			"  	s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
-            "  	s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
-			"  	s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
-			"  FROM " + TPCCConstants.TABLENAME_STOCK +
-			"  WHERE s_i_id = ? AND s_w_id = ?");
+	        "INSERT INTO " + TPCCConstants.TABLENAME_ORDERLINE + 
+	        " (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) " +
+            " VALUES (?,?,?,?,?,?,?,?,?)");
 
 
 	// NewOrder Txn
@@ -210,7 +188,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			int o_ol_cnt, int o_all_local, int[] itemIDs,
 			int[] supplierWarehouseIDs, int[] orderQuantities, Connection conn, TPCCWorker w)
 			throws SQLException {
-		float c_discount = 0.0f, w_tax, d_tax = 0, i_price;
+		float c_discount, w_tax, d_tax = 0, i_price;
 		int d_next_o_id, o_id = -1, s_quantity;
 		String c_last = null, c_credit = null, i_name, i_data, s_data;
 		String s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05;
@@ -223,16 +201,15 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		int ol_supply_w_id, ol_i_id, ol_quantity;
 		int s_remote_cnt_increment;
 		float ol_amount, total_amount = 0;
-
+		
 		try {
-      String migration = MessageFormat.format(getCustFormat,
-          w_id, d_id, c_id);
-      LOG.info(migration);
-      String[] command = {"/bin/sh", "-c",
-          "echo '" + migration + "' | " +
-          DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-          DBWorkload.DB_PORT_NUMBER + " tpcc"};
-      execCommands(command);
+			String migration = MessageFormat.format(getCustFormat, w_id, d_id, c_id);
+			// LOG.info(migration);
+			String[] command = {"/bin/sh", "-c",
+				"echo '" + migration + "' | " +
+				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
+				DBWorkload.DB_PORT_NUMBER + " tpcc"};
+			execCommands(command);
 
 			stmtGetCust.setInt(1, w_id);
 			stmtGetCust.setInt(2, d_id);
@@ -241,7 +218,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			if (!rs.next())
 				throw new RuntimeException("C_D_ID=" + d_id
 						+ " C_ID=" + c_id + " not found!");
-			// c_discount = rs.getFloat("C_DISCOUNT");
+			c_discount = rs.getFloat("C_DISCOUNT");
 			c_last = rs.getString("C_LAST");
 			c_credit = rs.getString("C_CREDIT");
 			rs.close();
@@ -299,7 +276,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			/*TODO: add error checking */
 
 
-			/* woonhak, [[change order
+			/* woonhak, [[change order				 
 			stmtInsertOOrder.setInt(1, o_id);
 			stmtInsertOOrder.setInt(2, d_id);
 			stmtInsertOOrder.setInt(3, w_id);
@@ -434,8 +411,6 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 				stmtInsertOrderLine.setInt(7, ol_quantity);
 				stmtInsertOrderLine.setDouble(8, ol_amount);
 				stmtInsertOrderLine.setString(9, ol_dist_info);
-				stmtInsertOrderLine.setInt(10, ol_i_id);
-				stmtInsertOrderLine.setInt(11, ol_supply_w_id);
 				stmtInsertOrderLine.addBatch();
 
 			} // end-for
