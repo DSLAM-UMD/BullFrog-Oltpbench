@@ -107,8 +107,6 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 	private PreparedStatement delivUpdateCarrierId = null;
 	private PreparedStatement delivUpdateDeliveryDate = null;
 	private PreparedStatement delivSumOrderAmount = null;
-	private PreparedStatement delivUpdateCustBalDelivCnt = null;
-
 
     public ResultSet run(Connection conn, Random gen,
 			int w_id, int numWarehouses,
@@ -125,7 +123,6 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 		delivUpdateCarrierId = this.getPreparedStatement(conn, delivUpdateCarrierIdSQL);
 		delivUpdateDeliveryDate = this.getPreparedStatement(conn, delivUpdateDeliveryDateSQL);
 		delivSumOrderAmount = this.getPreparedStatement(conn, delivSumOrderAmountSQL);
-		delivUpdateCustBalDelivCnt = this.getPreparedStatement(conn, delivUpdateCustBalDelivCntSQL);
 
 		int d_id, c_id;
         float ol_total = 0;
