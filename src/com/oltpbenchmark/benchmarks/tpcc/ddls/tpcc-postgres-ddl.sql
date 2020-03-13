@@ -145,6 +145,8 @@ CREATE TABLE warehouse (
 CREATE INDEX idx_customer_name ON customer (c_w_id,c_d_id,c_last,c_first);
 CREATE INDEX idx_order ON oorder (o_w_id,o_d_id,o_c_id,o_id);
 -- tpcc-mysql create two indexes for the foreign key constraints, Is it really necessary?
+-- CREATE INDEX FKEY_STOCK_2 ON STOCK (S_I_ID);
+-- CREATE INDEX FKEY_ORDER_LINE_2 ON ORDER_LINE (OL_SUPPLY_W_ID,OL_I_ID);
 
 --add 'ON DELETE CASCADE'  to clear table work correctly
 
@@ -189,19 +191,8 @@ CREATE TABLE orderline_stock (
   s_dist_07 char(24) NOT NULL,
   s_dist_08 char(24) NOT NULL,
   s_dist_09 char(24) NOT NULL,
-  s_dist_10 char(24) NOT NULL,
-  PRIMARY KEY (ol_w_id,ol_d_id,ol_o_id,ol_number)
+  s_dist_10 char(24) NOT NULL
 );
-
-CREATE INDEX FKEY_STOCK_2 ON STOCK (S_I_ID);
-CREATE INDEX s_order_1 ON stock (s_w_id, s_quantity);
-CREATE INDEX s_order_2 ON stock (s_w_id, s_i_id);
-
-CREATE INDEX FKEY_ORDER_LINE_2 ON ORDER_LINE (OL_I_ID);
-CREATE INDEX ol_order_1 ON order_line (ol_o_id, ol_d_id, ol_w_id);
-
-CREATE INDEX os_order_1 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id);
--- CREATE INDEX os_order_2 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id, s_w_id, s_quantity);
 
 CREATE OR REPLACE VIEW orderline_stock_v AS
 (
@@ -210,3 +201,30 @@ CREATE OR REPLACE VIEW orderline_stock_v AS
   WHERE ol_i_id = s_i_id
 );
 
+-- projection migration
+DROP TABLE IF EXISTS customer_proj CASCADE;
+CREATE TABLE customer_proj (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_balance decimal(12,2) NOT NULL,
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_data varchar(500) NOT NULL
+);
+
+CREATE OR REPLACE VIEW customer_proj_v AS
+(
+  SELECT c_w_id, c_d_id, c_id, c_credit, c_last,
+  c_first, c_balance, c_ytd_payment, c_payment_cnt,
+  c_delivery_cnt, c_street_1, c_city, c_state, c_zip, c_data
+  FROM customer
+);
