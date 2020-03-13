@@ -38,80 +38,66 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
     private static final Logger LOG = Logger.getLogger(DeliveryLazyMigrationProj.class);
 
 	public SQLStmt delivGetOrderIdSQL = new SQLStmt(
-	        "SELECT NO_O_ID FROM " + TPCCConstants.TABLENAME_NEWORDER +
+	        "SELECT NO_O_ID FROM " + TPCCConstants.TABLENAME_NEWORDER + 
 	        " WHERE NO_D_ID = ? " +
 	        "   AND NO_W_ID = ? " +
 	        " ORDER BY NO_O_ID ASC " +
 	        " LIMIT 1");
-
+	
 	public SQLStmt delivDeleteNewOrderSQL = new SQLStmt(
 	        "DELETE FROM " + TPCCConstants.TABLENAME_NEWORDER +
 			" WHERE NO_O_ID = ? " +
             "   AND NO_D_ID = ?" +
 			"   AND NO_W_ID = ?");
-
+	
 	public SQLStmt delivGetCustIdSQL = new SQLStmt(
-	        "SELECT O_C_ID FROM " + TPCCConstants.TABLENAME_OPENORDER +
+	        "SELECT O_C_ID FROM " + TPCCConstants.TABLENAME_OPENORDER + 
 	        " WHERE O_ID = ? " +
             "   AND O_D_ID = ? " +
 	        "   AND O_W_ID = ?");
-
+	
 	public SQLStmt delivUpdateCarrierIdSQL = new SQLStmt(
-	        "UPDATE " + TPCCConstants.TABLENAME_OPENORDER +
+	        "UPDATE " + TPCCConstants.TABLENAME_OPENORDER + 
 	        "   SET O_CARRIER_ID = ? " +
 			" WHERE O_ID = ? " +
 	        "   AND O_D_ID = ?" +
 			"   AND O_W_ID = ?");
-
-    String txnFormat =
-            "migrate 2 order_line stock " +
-            " explain select count(*) from orderline_stock_v " +
-            " where ol_o_id = {0,number,#} " +
-            "   and ol_d_id = {1,number,#} " +
-            "   and ol_w_id = {2,number,#}; "
-            +
-            "migrate insert into orderline_stock(" +
-            " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
-            " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
-            " s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
-            " s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
-            " (select " +
-            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
-            "  s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
-            "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
-            "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
-            "  from order_line, stock " +
-            "  where ol_i_id = s_i_id); "
-            +
-            "update orderline_stock " +
-            "   set ol_delivery_d = NOW() " +
-			" where ol_o_id = {3,number,#} " +
-			"   and ol_d_id = {4,number,#} " +
-			"   and ol_w_id = {5,number,#}; ";
-
+	
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
-	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
+	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE +
 	        "   SET OL_DELIVERY_D = ? " +
 			" WHERE OL_O_ID = ? " +
 			"   AND OL_D_ID = ? " +
 			"   AND OL_W_ID = ? ");
-
+	
 	public SQLStmt delivSumOrderAmountSQL = new SQLStmt(
 	        "SELECT SUM(OL_AMOUNT) AS OL_TOTAL " +
-			"  FROM " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
+			"  FROM " + TPCCConstants.TABLENAME_ORDERLINE + 
 			" WHERE OL_O_ID = ? " +
 			"   AND OL_D_ID = ? " +
 			"   AND OL_W_ID = ?");
 
-	public SQLStmt delivUpdateCustBalDelivCntSQL = new SQLStmt(
-	        "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER +
-	        "   SET C_BALANCE = C_BALANCE + ?," +
-			"       C_DELIVERY_CNT = C_DELIVERY_CNT + 1 " +
-			" WHERE C_W_ID = ? " +
-			"   AND C_D_ID = ? " +
-			"   AND C_ID = ? ");
+    String migrateFormat =
+			"migrate 1 customer " +
+			"explain select count(*) from customer_proj_v" +
+			"where c_w_id = {0,number,#}" +
+			"  and c_d_id = {1,number,#}" +
+			"  and c_id = {2,number,#}; "
+			+
+			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data) " +
+			"(select " +
+			"  c_w_id, c_d_id, c_id, c_credit, c_last, c_first, c_balance, " +
+			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+			"  c_city, c_state, c_zip, c_data " +
+            " from " + TPCCConstants.TABLENAME_CUSTOMER + ") " +
+	        "on conflict (c_w_id,c_d_id,c_id) " +
+            "do update set c_balance = c_balance + {3,number,#}, c_delivery_cnt = c_delivery_cnt + 1 " +
+			"where c_w_id = {4,number,#}" +
+			"  and c_d_id = {5,number,#}" +
+			"  and c_id = {6,number,#};";
 
 
 	// Delivery Txn
@@ -128,7 +114,7 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 			int w_id, int numWarehouses,
 			int terminalDistrictLowerID, int terminalDistrictUpperID,
 			TPCCWorker w) throws SQLException {
-
+		
         boolean trace = LOG.isDebugEnabled();
         int o_carrier_id = TPCCUtil.randomNumber(1, 10, gen);
         Timestamp timestamp = w.getBenchmarkModule().getTimestamp(System.currentTimeMillis());
@@ -174,7 +160,7 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
                 // This code used to run in a loop in an attempt to make this work
                 // with MySQL's default weird consistency level. We just always run
                 // this as SERIALIZABLE instead. I don't *think* that fixing this one
-                // error makes this work with MySQL's default consistency.
+                // error makes this work with MySQL's default consistency. 
                 // Careful auditing would be required.
                 String msg = String.format("NewOrder delete failed. Not running with SERIALIZABLE isolation? " +
                                            "[w_id=%d, d_id=%d, no_o_id=%d]", w_id, d_id, no_o_id);
@@ -213,31 +199,20 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
                 throw new RuntimeException(msg);
             }
 
+            delivUpdateDeliveryDate.setTimestamp(1, timestamp);
+            delivUpdateDeliveryDate.setInt(2, no_o_id);
+            delivUpdateDeliveryDate.setInt(3, d_id);
+            delivUpdateDeliveryDate.setInt(4, w_id);
+            if (trace) LOG.trace("delivUpdateDeliveryDate START");
+            result = delivUpdateDeliveryDate.executeUpdate();
+            if (trace) LOG.trace("delivUpdateDeliveryDate END");
 
-            // migration txn
-            String migration = MessageFormat.format(txnFormat,
-                no_o_id, d_id, w_id, no_o_id, d_id, w_id);
-            // LOG.info(migration);
-            String[] command = {"/bin/sh", "-c",
-                "echo '" + migration + "' | " +
-                DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-                DBWorkload.DB_PORT_NUMBER + " tpcc"};
-            execCommands(command);
-
-            // delivUpdateDeliveryDate.setTimestamp(1, timestamp);
-            // delivUpdateDeliveryDate.setInt(2, no_o_id);
-            // delivUpdateDeliveryDate.setInt(3, d_id);
-            // delivUpdateDeliveryDate.setInt(4, w_id);
-            // if (trace) LOG.trace("delivUpdateDeliveryDate START");
-            // result = delivUpdateDeliveryDate.executeUpdate();
-            // if (trace) LOG.trace("delivUpdateDeliveryDate END");
-
-            // if (result == 0){
-            //     String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
-            //                                w_id, d_id, no_o_id);
-            //     if (trace) LOG.warn(msg);
-            //     throw new RuntimeException(msg);
-            // }
+            if (result == 0){
+                String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
+                                           w_id, d_id, no_o_id);
+                if (trace) LOG.warn(msg);
+                throw new RuntimeException(msg);
+            }
 
 
             delivSumOrderAmount.setInt(1, no_o_id);
@@ -256,25 +231,19 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             ol_total = rs.getFloat("OL_TOTAL");
             rs.close();
 
-            int idx = 1; // HACK: So that we can debug this query
-            delivUpdateCustBalDelivCnt.setDouble(idx++, ol_total);
-            delivUpdateCustBalDelivCnt.setInt(idx++, w_id);
-            delivUpdateCustBalDelivCnt.setInt(idx++, d_id);
-            delivUpdateCustBalDelivCnt.setInt(idx++, c_id);
-            if (trace) LOG.trace("delivUpdateCustBalDelivCnt START");
-            result = delivUpdateCustBalDelivCnt.executeUpdate();
-            if (trace) LOG.trace("delivUpdateCustBalDelivCnt END");
-
-            if (result == 0) {
-                String msg = String.format("Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]",
-                                           w_id, d_id, c_id);
-                if (trace) LOG.warn(msg);
-                throw new RuntimeException(msg);
-            }
+            // migration txn
+            String migration = MessageFormat.format(migrateFormat,
+                w_id, d_id, c_id, ol_total, w_id, d_id, c_id);
+            // LOG.info(migration);
+            String[] command = {"/bin/sh", "-c",
+                "echo '" + migration + "' | " +
+                DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
+                DBWorkload.DB_PORT_NUMBER + " tpcc"};
+            execCommands(command);
         }
 
         conn.commit();
-
+         
         if (trace) {
             StringBuilder terminalMessage = new StringBuilder();
             terminalMessage
@@ -299,7 +268,7 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             terminalMessage.append("+-----------------------------------------------------------------+\n\n");
             LOG.trace(terminalMessage.toString());
         }
-
+	
 		return null;
     }
 
