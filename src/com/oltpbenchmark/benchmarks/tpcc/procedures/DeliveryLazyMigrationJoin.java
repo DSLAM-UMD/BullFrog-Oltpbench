@@ -84,7 +84,7 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
             "  where ol_i_id = s_i_id) " +
-	    " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) " +
+	        " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) " +
             " DO UPDATE SET ol_delivery_d = CURRENT_TIMESTAMP;";
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
