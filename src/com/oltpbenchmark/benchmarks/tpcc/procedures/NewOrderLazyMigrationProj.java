@@ -207,7 +207,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			String migration = MessageFormat.format(getCustFormat, w_id, d_id, c_id);
 			// LOG.info(migration);
 			String[] command = {"/bin/sh", "-c",
-				"echo '" + migration + "' | " +
+				"echo \"" + migration + "\" | " +
 				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
 				DBWorkload.DB_PORT_NUMBER + " tpcc"};
 			execCommands(command);

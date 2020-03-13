@@ -62,7 +62,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
 
     String payGetCustFormat =
 			"migrate 1 customer " +
-			"explain select count(*) from customer_proj_v" +
+			"explain select count(*) from customer_proj_v " +
 			"where (c_w_id = {0,number,#}" +
 			"  and c_d_id = {1,number,#}" +
             "  and c_id = {2,number,#});"
@@ -114,9 +114,9 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
     String customerByNameFormat =
 			"migrate 1 customer " +
 			"explain select count(*) from customer_proj_v " +
-			"where (c_w_id = {0,number,#}" +
+			"where c_w_id = {0,number,#}" +
             "  and c_d_id = {1,number,#}" +
-            "  and c_last = {2});"
+            "  and c_last = ''{2}'';"
 			+
 			"migrate insert into " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + "(" +
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
@@ -130,7 +130,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             "on conflict (c_w_id,c_d_id,c_id) do nothing;";
 
     public SQLStmt customerByNameSQL = new SQLStmt(
-            "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
+            "SELECT C_ID, C_FIRST, C_LAST, C_STREET_1, " + 
             "  C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
             "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
             "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
@@ -251,7 +251,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
                 customerWarehouseID, customerDistrictID, customerLastName);
 			// LOG.info(migration);
 			String[] command = {"/bin/sh", "-c",
-				"echo '" + migration + "' | " +
+                "echo \"" + migration + "\" | " +
 				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
 				DBWorkload.DB_PORT_NUMBER + " tpcc"};
 			execCommands(command);
@@ -262,7 +262,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
                 customerWarehouseID, customerDistrictID, customerID);
 			// LOG.info(migration);
 			String[] command = {"/bin/sh", "-c",
-				"echo '" + migration + "' | " +
+                "echo \"" + migration + "\" | " +
 				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
 				DBWorkload.DB_PORT_NUMBER + " tpcc"};
 			execCommands(command);
