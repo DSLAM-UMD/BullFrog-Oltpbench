@@ -6,8 +6,8 @@
     <DBName>tpcc</DBName>
     <username>postgres</username>
     <password>postgres</password>
-    <isolation>TRANSACTION_READ_COMMITTED</isolation>
-    <terminals>10</terminals>
+    <isolation>TRANSACTION_SERIALIZABLE</isolation>
+    <terminals>5</terminals>
 
     <scalefactor>1</scalefactor>
     <uploadCode></uploadCode>
@@ -40,7 +40,7 @@
     <works>
         <work>
           <time>760</time>
-          <rate>100</rate>
+          <rate>300</rate>
           <weights>45, 43, 4, 4, 4</weights>
         </work>
         </works>
