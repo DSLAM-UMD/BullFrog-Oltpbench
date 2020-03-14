@@ -31,6 +31,7 @@ import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
+import com.oltpbenchmark.benchmarks.linkbench.LinkBenchConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 import com.oltpbenchmark.benchmarks.tpcc.pojo.Customer;
 
@@ -78,33 +79,33 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             " from customer) " +
             "on conflict (c_w_id,c_d_id,c_id) do nothing;";
 
-    public SQLStmt payGetCustSQL = new SQLStmt(
+    String payGetCustQueryFmt = 
             "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
             "       C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
-            "       C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
+            "       C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA, C_ID " +
             "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
-            " WHERE C_W_ID = ? " +
-            "   AND C_D_ID = ? " +
-            "   AND C_ID = ?");
+			" where c_w_id = {0,number,#} " +
+            "  and c_d_id = {1,number,#} " +
+            "  and c_id = {2,number,#};";
     
-    public SQLStmt payUpdateCustBalCdataSQL = new SQLStmt(
+    String payUpdateCustBalCdataSQLFmt =
             "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
-            "   SET C_BALANCE = ?, " +
-            "       C_YTD_PAYMENT = ?, " + 
-            "       C_PAYMENT_CNT = ?, " +
-            "       C_DATA = ? " +
-            " WHERE C_W_ID = ? " +
-            "   AND C_D_ID = ? " + 
-            "   AND C_ID = ?");
+            "   SET C_BALANCE = {0,number,#}, " +
+            "       C_YTD_PAYMENT = {1,number,#}, " + 
+            "       C_PAYMENT_CNT = {2,number,#}, " +
+            "       C_DATA = ''{3}'' " +
+            " WHERE C_W_ID = {4,number,#} " +
+            "   AND C_D_ID = {5,number,#} " + 
+            "   AND C_ID = {6,number,#};";
     
-    public SQLStmt payUpdateCustBalSQL = new SQLStmt(
+    String payUpdateCustBalSQLFmt =
             "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
-            "   SET C_BALANCE = ?, " +
-            "       C_YTD_PAYMENT = ?, " +
-            "       C_PAYMENT_CNT = ? " +
-            " WHERE C_W_ID = ? " + 
-            "   AND C_D_ID = ? " + 
-            "   AND C_ID = ?");
+            "   SET C_BALANCE = {0,number,#}, " +
+            "       C_YTD_PAYMENT = {1,number,#}, " +
+            "       C_PAYMENT_CNT = {2,number,#} " +
+            " WHERE C_W_ID = {3,number,#} " + 
+            "   AND C_D_ID = {4,number,#} " + 
+            "   AND C_ID = {5,number,#};";
     
     public SQLStmt payInsertHistSQL = new SQLStmt(
             "INSERT INTO " + TPCCConstants.TABLENAME_HISTORY + 
@@ -129,26 +130,22 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             " from customer) " +
             "on conflict (c_w_id,c_d_id,c_id) do nothing;";
 
-    public SQLStmt customerByNameSQL = new SQLStmt(
-            "SELECT C_ID, C_FIRST, C_LAST, C_STREET_1, " + 
+    String customerByNameSQLFmt =
+            "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
             "  C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
-            "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
+            "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA, C_ID " +
             "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
-            " WHERE C_W_ID = ? " +
-            "   AND C_D_ID = ? " +
-            "   AND C_LAST = ? " +
-            " ORDER BY C_FIRST");
+            " WHERE C_W_ID = {0,number,#} " +
+            "   AND C_D_ID = {1,number,#} " +
+            "   AND C_LAST = ''{2}'' " +
+            " ORDER BY C_FIRST;";
 
     // Payment Txn
     private PreparedStatement payUpdateWhse = null;
     private PreparedStatement payGetWhse = null;
     private PreparedStatement payUpdateDist = null;
-    private PreparedStatement payGetDist = null;
-    private PreparedStatement payGetCust = null;
-    private PreparedStatement payUpdateCustBalCdata = null;
-    private PreparedStatement payUpdateCustBal = null;
     private PreparedStatement payInsertHist = null;
-    private PreparedStatement customerByName = null;
+    private PreparedStatement payGetDist = null;
 
     public ResultSet run(Connection conn, Random gen,
                          int w_id, int numWarehouses,
@@ -159,11 +156,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
         payGetWhse = this.getPreparedStatement(conn, payGetWhseSQL);
         payUpdateDist = this.getPreparedStatement(conn, payUpdateDistSQL);
         payGetDist = this.getPreparedStatement(conn, payGetDistSQL);
-        payGetCust = this.getPreparedStatement(conn, payGetCustSQL);
-        payUpdateCustBalCdata = this.getPreparedStatement(conn, payUpdateCustBalCdataSQL);
-        payUpdateCustBal = this.getPreparedStatement(conn, payUpdateCustBalSQL);
         payInsertHist = this.getPreparedStatement(conn, payInsertHistSQL);
-        customerByName = this.getPreparedStatement(conn, customerByNameSQL);
 
         // payUpdateWhse =this.getPreparedStatement(conn, payUpdateWhseSQL);
 
@@ -254,7 +247,8 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
                 "echo \"" + migration + "\" | " +
 				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
 				DBWorkload.DB_PORT_NUMBER + " tpcc"};
-			execCommands(command);
+            execCommands(command);
+
             c = getCustomerByName(customerWarehouseID, customerDistrictID, customerLastName);
         } else {
             assert customerLastName == null;
@@ -265,7 +259,8 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
                 "echo \"" + migration + "\" | " +
 				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
 				DBWorkload.DB_PORT_NUMBER + " tpcc"};
-			execCommands(command);
+            execCommands(command);
+
             c = getCustomerById(customerWarehouseID, customerDistrictID, customerID, conn);
         }
 
@@ -279,31 +274,25 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             if (c_data.length() > 500)
                 c_data = c_data.substring(0, 500);
 
-            payUpdateCustBalCdata.setDouble(1, c.c_balance);
-            payUpdateCustBalCdata.setDouble(2, c.c_ytd_payment);
-            payUpdateCustBalCdata.setInt(3, c.c_payment_cnt);
-            payUpdateCustBalCdata.setString(4, c_data);
-            payUpdateCustBalCdata.setInt(5, customerWarehouseID);
-            payUpdateCustBalCdata.setInt(6, customerDistrictID);
-            payUpdateCustBalCdata.setInt(7, c.c_id);
-            result = payUpdateCustBalCdata.executeUpdate();
-
-            if (result == 0)
-                throw new RuntimeException("Error in PYMNT Txn updating Customer C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID);
-
+            String migration = MessageFormat.format(payUpdateCustBalCdataSQLFmt,
+                c.c_balance, c.c_ytd_payment, c.c_payment_cnt, c_data,
+                customerWarehouseID, customerDistrictID, c.c_id);
+            // LOG.info(migration);
+            String[] command = {"/bin/sh", "-c",
+                "echo \"" + migration + "\" | " +
+                DBWorkload.DB_BINARY_PATH + "/psql -qStAF , -1 -p " +
+                DBWorkload.DB_PORT_NUMBER + " tpcc"};
+            execCommands(command);
         } else { // GoodCredit
-
-            payUpdateCustBal.setDouble(1, c.c_balance);
-            payUpdateCustBal.setDouble(2, c.c_ytd_payment);
-            payUpdateCustBal.setInt(3, c.c_payment_cnt);
-            payUpdateCustBal.setInt(4, customerWarehouseID);
-            payUpdateCustBal.setInt(5, customerDistrictID);
-            payUpdateCustBal.setInt(6, c.c_id);
-            result = payUpdateCustBal.executeUpdate();
-
-            if (result == 0)
-                throw new RuntimeException("C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID + " not found!");
-
+            String migration = MessageFormat.format(payUpdateCustBalSQLFmt,
+                c.c_balance, c.c_ytd_payment, c.c_payment_cnt, customerWarehouseID,
+                customerDistrictID, c.c_id);
+            // LOG.info(migration);
+            String[] command = {"/bin/sh", "-c",
+                "echo \"" + migration + "\" | " +
+                DBWorkload.DB_BINARY_PATH + "/psql -qStAF , -1 -p " +
+                DBWorkload.DB_PORT_NUMBER + " tpcc"};
+            execCommands(command);
         }
 
         if (w_name.length() > 10)
@@ -401,19 +390,16 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
     // attention duplicated code across trans... ok for now to maintain separate
     // prepared statements
     public Customer getCustomerById(int c_w_id, int c_d_id, int c_id, Connection conn) throws SQLException {
+        String migration = MessageFormat.format(payGetCustQueryFmt, c_w_id, c_d_id, c_id);
+        // LOG.info(migration);
+        String[] command = {"/bin/sh", "-c",
+            "echo \"" + migration + "\" | " +
+            DBWorkload.DB_BINARY_PATH + "/psql -qStAF , -1 -p " +
+            DBWorkload.DB_PORT_NUMBER + " tpcc"};
+        ArrayList<String> list = execCommandWithRet(command);
 
-        payGetCust.setInt(1, c_w_id);
-        payGetCust.setInt(2, c_d_id);
-        payGetCust.setInt(3, c_id);
-        ResultSet rs = payGetCust.executeQuery();
-        if (!rs.next()) {
-            throw new RuntimeException("C_ID=" + c_id + " C_D_ID=" + c_d_id + " C_W_ID=" + c_w_id + " not found!");
-        }
-
-        Customer c = TPCCUtil.newCustomerFromResults2(rs);
+        Customer c = TPCCUtil.newCustomerFromResults2(list.get(0));
         c.c_id = c_id;
-        c.c_last = rs.getString("C_LAST");
-        rs.close();
         return c;
     }
 
@@ -422,22 +408,17 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
     public Customer getCustomerByName(int c_w_id, int c_d_id, String customerLastName) throws SQLException {
         ArrayList<Customer> customers = new ArrayList<Customer>();
 
-        customerByName.setInt(1, c_w_id);
-        customerByName.setInt(2, c_d_id);
-        customerByName.setString(3, customerLastName);
-        ResultSet rs = customerByName.executeQuery();
-        if (LOG.isTraceEnabled()) LOG.trace("C_LAST=" + customerLastName + " C_D_ID=" + c_d_id + " C_W_ID=" + c_w_id);
+        String migration = MessageFormat.format(customerByNameSQLFmt, c_w_id, c_d_id, customerLastName);
+        // LOG.info(migration);
+        String[] command = {"/bin/sh", "-c",
+            "echo \"" + migration + "\" | " +
+            DBWorkload.DB_BINARY_PATH + "/psql -qStAF , -1 -p " +
+            DBWorkload.DB_PORT_NUMBER + " tpcc"};
+        ArrayList<String> list = execCommandWithRet(command);
 
-        while (rs.next()) {
-            Customer c = TPCCUtil.newCustomerFromResults2(rs);
-            c.c_id = rs.getInt("C_ID");
-            c.c_last = customerLastName;
-            customers.add(c);
-        }
-        rs.close();
-
-        if (customers.size() == 0) {
-            throw new RuntimeException("C_LAST=" + customerLastName + " C_D_ID=" + c_d_id + " C_W_ID=" + c_w_id + " not found!");
+        for (String l : list) {
+            // LOG.info(l);
+            customers.add(TPCCUtil.newCustomerFromResults2(l));
         }
 
         // TPC-C 2.5.2.2: Position n / 2 rounded up to the next integer, but

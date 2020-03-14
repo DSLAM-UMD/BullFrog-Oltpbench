@@ -31,6 +31,8 @@ import static com.oltpbenchmark.benchmarks.tpcc.TPCCConfig.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.oltpbenchmark.benchmarks.tpcc.pojo.Customer;
 import com.oltpbenchmark.util.RandomGenerator;
@@ -63,6 +65,24 @@ public class TPCCUtil {
 		c.c_ytd_payment = rs.getFloat("c_ytd_payment");
 		c.c_payment_cnt = rs.getInt("c_payment_cnt");
 		c.c_since = rs.getTimestamp("c_since");
+		return c;
+	}
+
+	public static Customer newCustomerFromResults2(String output) {
+		Customer c = new Customer();
+		String[] res = output.split(",");
+		c.c_first = res[0];
+		c.c_last = res[1];
+		c.c_street_1 = res[2];
+		c.c_city = res[3];
+		c.c_state = res[4];
+		c.c_zip = res[5];
+		c.c_credit = res[6];
+		c.c_balance = Float.valueOf(res[7]);
+		c.c_ytd_payment = Float.valueOf(res[8]);
+		c.c_payment_cnt = Integer.valueOf(res[9]);
+		c.c_data = res[10];
+		c.c_id = Integer.valueOf(res[11]);
 		return c;
 	}
 	public static Customer newCustomerFromResults2(ResultSet rs)

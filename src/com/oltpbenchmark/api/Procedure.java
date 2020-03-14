@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,10 +58,36 @@ public abstract class Procedure {
         this.procName = this.getClass().getSimpleName();
     }
     
+    public ArrayList<String> execCommandWithRet(String[] commands) {
+        ArrayList<String> list = new ArrayList<>();
+        try {
+            Process p = Runtime.getRuntime().exec(commands);
+            BufferedInputStream is = new BufferedInputStream(p.getInputStream());
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            String line;
+            String result;
+            while ((line = reader.readLine()) != null) {
+                // LOG.info(line);
+                list.add(line);
+            }
+            try {
+                p.waitFor();
+                is.close();
+                reader.close();
+                p.destroy();
+            } catch(InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public void execCommands(String[] commands) {
         try {
             Process p = Runtime.getRuntime().exec(commands);
-            BufferedInputStream is = new BufferedInputStream(p.getErrorStream());
+            BufferedInputStream is = new BufferedInputStream(p.getInputStream());
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             String line;
             String result;
