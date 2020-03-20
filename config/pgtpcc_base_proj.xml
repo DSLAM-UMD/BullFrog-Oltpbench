@@ -58,7 +58,7 @@
 
         <works>
         <work>
-          <time>50</time>
+          <time>30</time>
           <rate>300</rate>
           <active_terminals>5</active_terminals>
           <weights bench="tpcc">45, 43, 4, 4, 4, 0, 0, 0, 0, 0</weights>
@@ -70,7 +70,7 @@
 	  <weights bench="tpcc">0, 0, 0, 0, 4, 96, 0, 0, 0, 0</weights>
         </work>
         <work>
-          <time>50</time>
+          <time>55</time>
           <rate>300</rate>
           <active_terminals>5</active_terminals>
 	  <weights bench="tpcc">0, 0, 0, 0, 4, 0, 45, 43, 4, 4</weights>
