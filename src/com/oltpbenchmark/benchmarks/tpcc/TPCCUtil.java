@@ -18,7 +18,7 @@
 package com.oltpbenchmark.benchmarks.tpcc;
 
 /*
- * jTPCCUtil - utility functions for the Open Source Java implementation of 
+ * jTPCCUtil - utility functions for the Open Source Java implementation of
  *    the TPC-C benchmark
  *
  * Copyright (C) 2003, Raul Barbosa
@@ -98,13 +98,13 @@ public class TPCCUtil {
 		c.c_balance = rs.getFloat("c_balance");
 		c.c_ytd_payment = rs.getFloat("c_ytd_payment");
 		c.c_payment_cnt = rs.getInt("c_payment_cnt");
-		c.c_data = rs.getString("c_data");
+		// c.c_data = rs.getString("c_data");
 		return c;
 	}
 	private static final RandomGenerator ran = new RandomGenerator(0);
 
 	public static String randomStr(int strLen) {
-	    if (strLen > 1) 
+	    if (strLen > 1)
 	        return ran.astring(strLen - 1, strLen - 1);
 	    else
 	        return "";
