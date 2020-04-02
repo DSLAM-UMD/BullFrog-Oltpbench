@@ -9,7 +9,7 @@
     <isolation>TRANSACTION_SERIALIZABLE</isolation>
     <terminals>5</terminals>
 
-    <scalefactor>1</scalefactor>
+    <scalefactor>50</scalefactor>
     <uploadCode></uploadCode>
     <uploadUrl></uploadUrl>
         <transactiontypes bench="tpcc">
@@ -64,7 +64,7 @@
           <weights bench="tpcc">45, 43, 4, 4, 4, 0, 0, 0, 0, 0</weights>
         </work>
         <work>
-          <time>700</time>
+          <time>125</time>
           <rate>300</rate>
           <active_terminals>1</active_terminals>
 	  <weights bench="tpcc">0, 43, 4, 0, 0, 53, 0, 0, 0, 0</weights>
