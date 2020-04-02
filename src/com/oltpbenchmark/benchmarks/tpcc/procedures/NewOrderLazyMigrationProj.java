@@ -36,13 +36,14 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 
     private static final Logger LOG = Logger.getLogger(NewOrderLazyMigrationProj.class);
 
-    String getCustFormat =
+	public final SQLStmt  migrationSQL1 = new SQLStmt(
 			"migrate 1 customer " +
 			"explain select count(*) from customer_proj_v " +
-			"where c_w_id = {0,number,#}" +
-			"  and c_d_id = {1,number,#}" +
-			"  and c_id = {2,number,#};"
-			+
+			"where c_w_id = ?" +
+			"  and c_d_id = ?" +
+			"  and c_id = ?;");
+
+	public final SQLStmt  migrationSQL2 = new SQLStmt(
 			"migrate insert into customer_proj(" +
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
@@ -52,7 +53,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
 			" from customer) " +
-			"on conflict (c_w_id,c_d_id,c_id) do nothing;";
+			"on conflict (c_w_id,c_d_id,c_id) do nothing;");
 
 	public final SQLStmt stmtGetCustSQL = new SQLStmt(
 			"SELECT C_DISCOUNT, C_LAST, C_CREDIT" +
@@ -125,7 +126,8 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 	private PreparedStatement stmtGetStock = null;
 	private PreparedStatement stmtUpdateStock = null;
 	private PreparedStatement stmtInsertOrderLine = null;
-
+	private PreparedStatement stmtMigration1 = null;
+	private PreparedStatement stmtMigration2 = null;
 
     public ResultSet run(Connection conn, Random gen,
 			int terminalWarehouseID, int numWarehouses,
@@ -145,6 +147,8 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		stmtGetStock =this.getPreparedStatement(conn, stmtGetStockSQL);
 		stmtUpdateStock =this.getPreparedStatement(conn, stmtUpdateStockSQL);
 		stmtInsertOrderLine =this.getPreparedStatement(conn, stmtInsertOrderLineSQL);
+		stmtMigration1 = this.getPreparedStatement(conn, migrationSQL1);
+		stmtMigration2 = this.getPreparedStatement(conn, migrationSQL2);
 
 
 		int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
@@ -204,13 +208,20 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		float ol_amount, total_amount = 0;
 		
 		try {
-			String migration = MessageFormat.format(getCustFormat, w_id, d_id, c_id);
-			String[] command = {"/bin/sh", "-c",
-				"echo \"" + migration + "\" | " +
-				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-				DBWorkload.DB_PORT_NUMBER + " tpcc"};
-			execCommands(command);
-			// LOG.info(migration);
+			try {
+  				conn.setAutoCommit(false);
+				stmtMigration1.setInt(1, w_id);
+				stmtMigration1.setInt(2, d_id);
+				stmtMigration1.setInt(3, c_id);
+				stmtMigration1.executeQuery();
+				stmtMigration2.executeUpdate();
+				conn.commit();
+			}
+			catch(Exception e) {
+				LOG.info(e.getMessage());
+				conn.rollback();
+				throw new RuntimeException(String.format("Error  %s", e.getMessage()), e);
+			}
 
 			stmtGetCust.setInt(1, w_id);
 			stmtGetCust.setInt(2, d_id);

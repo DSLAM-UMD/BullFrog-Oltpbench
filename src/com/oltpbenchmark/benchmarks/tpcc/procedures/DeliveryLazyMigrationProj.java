@@ -77,25 +77,26 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 			"   AND OL_D_ID = ? " +
 			"   AND OL_W_ID = ?");
 
-    String migrateFormat =
-			"migrate 1 customer " +
-			"explain select count(*) from customer_proj_v " +
-			"where c_w_id = {0,number,#}" +
-			"  and c_d_id = {1,number,#}" +
-			"  and c_id = {2,number,#}; "
-			+
-			"migrate insert into customer_proj(" +
-			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-			"  c_city, c_state, c_zip, c_data) " +
-			"(select " +
-			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-			"  c_city, c_state, c_zip, c_data " +
+    public final SQLStmt migrationSQL1 = new SQLStmt(
+            "migrate 1 customer " +
+            "explain select count(*) from customer_proj_v " +
+            "where c_w_id = ?" +
+            "  and c_d_id = ?" +
+            "  and c_id = ?;");
+    
+    public final SQLStmt migrationSQL2 = new SQLStmt(
+            "migrate insert into customer_proj(" +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data) " +
+            "(select " +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data " +
             "from customer) " +
-	        "on conflict (c_w_id,c_d_id,c_id) " +
-            "do update set c_balance = customer_proj.c_balance + {3,number,#}," +
-            " c_delivery_cnt = customer_proj.c_delivery_cnt + 1;";
+            "on conflict (c_w_id,c_d_id,c_id) " +
+            "do update set c_balance = customer_proj.c_balance + ?," +
+            " c_delivery_cnt = customer_proj.c_delivery_cnt + 1;");
 
 
 	// Delivery Txn
@@ -104,7 +105,9 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 	private PreparedStatement delivGetCustId = null;
 	private PreparedStatement delivUpdateCarrierId = null;
 	private PreparedStatement delivUpdateDeliveryDate = null;
-	private PreparedStatement delivSumOrderAmount = null;
+    private PreparedStatement delivSumOrderAmount = null;
+    private PreparedStatement migration1 = null;
+    private PreparedStatement migration2 = null;
 
     public ResultSet run(Connection conn, Random gen,
 			int w_id, int numWarehouses,
@@ -120,7 +123,9 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 		delivGetCustId = this.getPreparedStatement(conn, delivGetCustIdSQL);
 		delivUpdateCarrierId = this.getPreparedStatement(conn, delivUpdateCarrierIdSQL);
 		delivUpdateDeliveryDate = this.getPreparedStatement(conn, delivUpdateDeliveryDateSQL);
-		delivSumOrderAmount = this.getPreparedStatement(conn, delivSumOrderAmountSQL);
+        delivSumOrderAmount = this.getPreparedStatement(conn, delivSumOrderAmountSQL);
+        migration1 = this.getPreparedStatement(conn, migrationSQL1);
+        migration2 = this.getPreparedStatement(conn, migrationSQL2);
 
 		int d_id, c_id;
         float ol_total = 0;
@@ -227,14 +232,12 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             rs.close();
 
             // migration txn
-            String migration = MessageFormat.format(migrateFormat,
-                w_id, d_id, c_id, ol_total);
-            // LOG.info(migration);
-            String[] command = {"/bin/sh", "-c",
-                "echo \"" + migration + "\" | " +
-                DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-                DBWorkload.DB_PORT_NUMBER + " tpcc"};
-            execCommands(command);
+            migration1.setInt(1, w_id);
+            migration1.setInt(2, d_id);
+            migration1.setInt(3, c_id);
+            migration1.executeQuery();
+            migration2.setFloat(1, ol_total);
+            migration2.executeUpdate();
         }
 
         conn.commit();

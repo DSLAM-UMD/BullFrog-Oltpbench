@@ -53,55 +53,57 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             "   AND OL_D_ID = ?" + 
             "   AND OL_W_ID = ?");
 
-    String payGetCustFormat =
-			"migrate 1 customer " +
-			"explain select count(*) from customer_proj_v " +
-			"where c_w_id = {0,number,#}" +
-			"  and c_d_id = {1,number,#}" +
-            "  and c_id = {2,number,#};"
-			+
-			"migrate insert into customer_proj(" +
-			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-			"  c_city, c_state, c_zip, c_data) " +
-			"(select " +
-			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-			"  c_city, c_state, c_zip, c_data " +
-            " from customer) " +
-            "on conflict (c_w_id,c_d_id,c_id) do nothing;";
+    public SQLStmt payGetCustSQL1 = new SQLStmt(
+            "migrate 1 customer " +
+            "explain select count(*) from customer_proj_v " +
+            "where c_w_id = ?" +
+            "  and c_d_id = ?" +
+            "  and c_id = ?;");
 
-	public SQLStmt payGetCustSQL = new SQLStmt(
+    public SQLStmt payGetCustSQL2 = new SQLStmt(
+            "migrate insert into customer_proj(" +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data) " +
+            "(select " +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data " +
+            " from customer) " +
+            "on conflict (c_w_id,c_d_id,c_id) do nothing;");
+
+    public SQLStmt payGetCustSQL3 = new SQLStmt( 
             "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
             "  C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
-            "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
+            "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA, C_ID " +
             "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
             "   AND C_ID = ?");
 
-    String customerByNameFormat =
-			"migrate 1 customer " +
-			"explain select count(*) from customer_proj_v " +
-			"where c_w_id = {0,number,#}" +
-            "  and c_d_id = {1,number,#}" +
-            "  and c_last = ''{2}'';"
-			+
-			"migrate insert into customer_proj(" +
-			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-			"  c_city, c_state, c_zip, c_data) " +
-			"(select " +
-			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-			"  c_city, c_state, c_zip, c_data " +
+    public SQLStmt customerByNameSQL1 = new SQLStmt(
+            "migrate 1 customer " +
+            "explain select count(*) from customer_proj_v " +
+            "where c_w_id = ?" +
+            "  and c_d_id = ?" +
+            "  and c_last = ?;");
+            
+    public SQLStmt customerByNameSQL2 = new SQLStmt(
+            "migrate insert into customer_proj(" +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data) " +
+            "(select " +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data " +
             " from customer) " +
-            "on conflict (c_w_id,c_d_id,c_id) do nothing;";
-
-	public SQLStmt customerByNameSQL = new SQLStmt(
+            "on conflict (c_w_id,c_d_id,c_id) do nothing;");
+        
+    public SQLStmt customerByNameSQL3 = new SQLStmt( 
             "SELECT C_ID, C_FIRST, C_LAST, C_STREET_1, " + 
             "  C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
-            "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
+            "  C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA, C_ID " +
             " FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
@@ -110,18 +112,26 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
 
 	private PreparedStatement ordStatGetNewestOrd = null;
 	private PreparedStatement ordStatGetOrderLines = null;
-	private PreparedStatement payGetCust = null;
-	private PreparedStatement customerByName = null;
+    private PreparedStatement payGetCust1 = null;
+    private PreparedStatement payGetCust2 = null;
+    private PreparedStatement payGetCust3 = null;
+    private PreparedStatement customerByName1 = null;
+    private PreparedStatement customerByName2 = null;
+    private PreparedStatement customerByName3 = null;
 
 
     public ResultSet run(Connection conn, Random gen, int w_id, int numWarehouses, int terminalDistrictLowerID, int terminalDistrictUpperID, TPCCWorker w) throws SQLException {
         boolean trace = LOG.isTraceEnabled();
         
         // initializing all prepared statements
-        payGetCust = this.getPreparedStatement(conn, payGetCustSQL);
-        customerByName = this.getPreparedStatement(conn, customerByNameSQL);
         ordStatGetNewestOrd = this.getPreparedStatement(conn, ordStatGetNewestOrdSQL);
         ordStatGetOrderLines = this.getPreparedStatement(conn, ordStatGetOrderLinesSQL);
+        payGetCust1 = this.getPreparedStatement(conn, payGetCustSQL1);
+        payGetCust2 = this.getPreparedStatement(conn, payGetCustSQL2);
+        payGetCust3 = this.getPreparedStatement(conn, payGetCustSQL3);
+        customerByName1 = this.getPreparedStatement(conn, customerByNameSQL1);
+        customerByName2 = this.getPreparedStatement(conn, customerByNameSQL2);
+        customerByName3 = this.getPreparedStatement(conn, customerByNameSQL3);
 
         int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
         boolean c_by_name = false;
@@ -145,24 +155,60 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             assert c_id <= 0;
             // TODO: This only needs c_balance, c_first, c_middle, c_id
             // only fetch those columns?
-			String migration = MessageFormat.format(customerByNameFormat, w_id, d_id, c_last);
-			// LOG.info(migration);
-			String[] command = {"/bin/sh", "-c",
-				"echo \"" + migration + "\" | " +
-				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-				DBWorkload.DB_PORT_NUMBER + " tpcc"};
-			execCommands(command);
-            c = getCustomerByName(w_id, d_id, c_last);
+            ArrayList<Customer> customers = new ArrayList<Customer>();
+
+            customerByName1.setInt(1, w_id);
+            customerByName1.setInt(2, d_id);
+            customerByName1.setString(3, c_last);
+            customerByName3.setInt(1, w_id);
+            customerByName3.setInt(2, d_id);
+            customerByName3.setString(3, c_last);
+    
+            conn.setAutoCommit(false);
+            customerByName1.executeQuery();
+            customerByName2.executeUpdate();
+            ResultSet rs = customerByName3.executeQuery();
+            conn.commit();
+
+            if (LOG.isTraceEnabled()) LOG.trace("C_LAST=" + c_last + " C_D_ID=" + d_id + " C_W_ID=" + w_id);
+    
+            while (rs.next()) {
+                customers.add(TPCCUtil.newCustomerFromResults2(rs));
+            }
+            rs.close();
+
+            if (customers.size() == 0) {
+                throw new RuntimeException("C_LAST=" + c_last + " C_D_ID=" + d_id + " C_W_ID=" + w_id + " not found!");
+            }
+    
+            // TPC-C 2.5.2.2: Position n / 2 rounded up to the next integer, but
+            // that counts starting from 1.
+            int index = customers.size() / 2;
+            if (customers.size() % 2 == 0) {
+                index -= 1;
+            }
+            c = customers.get(index);
         } else {
             assert c_last == null;
-			String migration = MessageFormat.format(payGetCustFormat, w_id, d_id, c_id);
-			// LOG.info(migration);
-			String[] command = {"/bin/sh", "-c",
-				"echo \"" + migration + "\" | " +
-				DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-                DBWorkload.DB_PORT_NUMBER + " tpcc"};
-			execCommands(command);
-            c = getCustomerById(w_id, d_id, c_id, conn);
+            payGetCust1.setInt(1, w_id);
+            payGetCust1.setInt(2, d_id);
+            payGetCust1.setInt(3, c_id);
+            payGetCust3.setInt(1, w_id);
+            payGetCust3.setInt(2, d_id);
+            payGetCust3.setInt(3, c_id);
+
+            conn.setAutoCommit(false);
+            payGetCust1.executeQuery();
+            payGetCust2.executeUpdate();
+            ResultSet rs = payGetCust3.executeQuery();
+            conn.commit();
+
+            if (!rs.next()) {
+                throw new RuntimeException("C_ID=" + c_id + " C_D_ID=" + d_id + " C_W_ID=" + w_id + " not found!");
+            }
+    
+            c = TPCCUtil.newCustomerFromResults2(rs);
+            rs.close();
         }
 
         // find the newest order for the customer
@@ -271,72 +317,4 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
         
         return null;
     }
-
-    // attention duplicated code across trans... ok for now to maintain separate
-    // prepared statements
-    public Customer getCustomerById(int c_w_id, int c_d_id, int c_id, Connection conn) throws SQLException {
-        boolean trace = LOG.isTraceEnabled();
-
-        payGetCust.setInt(1, c_w_id);
-        payGetCust.setInt(2, c_d_id);
-        payGetCust.setInt(3, c_id);
-        if (trace) LOG.trace("payGetCust START");
-        ResultSet rs = payGetCust.executeQuery();
-        if (trace) LOG.trace("payGetCust END");
-        if (!rs.next()) {
-            String msg = String.format("Failed to get CUSTOMER [C_W_ID=%d, C_D_ID=%d, C_ID=%d]",
-                                       c_w_id, c_d_id, c_id);
-            if (trace) LOG.warn(msg);
-            throw new RuntimeException(msg);
-        }
-
-        Customer c = TPCCUtil.newCustomerFromResults2(rs);
-        c.c_id = c_id;
-        c.c_last = rs.getString("C_LAST");
-        rs.close();
-        return c;
-    }
-
-    // attention this code is repeated in other transacitons... ok for now to
-    // allow for separate statements.
-    public Customer getCustomerByName(int c_w_id, int c_d_id, String c_last) throws SQLException {
-        ArrayList<Customer> customers = new ArrayList<Customer>();
-        boolean trace = LOG.isDebugEnabled();
-
-        customerByName.setInt(1, c_w_id);
-        customerByName.setInt(2, c_d_id);
-        customerByName.setString(3, c_last);
-        if (trace) LOG.trace("customerByName START");
-        ResultSet rs = customerByName.executeQuery();
-        if (trace) LOG.trace("customerByName END");
-
-        while (rs.next()) {
-            Customer c = TPCCUtil.newCustomerFromResults2(rs);
-            c.c_id = rs.getInt("C_ID");
-            c.c_last = c_last;
-            customers.add(c);
-        }
-        rs.close();
-
-        if (customers.size() == 0) {
-            String msg = String.format("Failed to get CUSTOMER [C_W_ID=%d, C_D_ID=%d, C_LAST=%s]",
-                                       c_w_id, c_d_id, c_last);
-            if (trace) LOG.warn(msg);
-            throw new RuntimeException(msg);
-        }
-
-        // TPC-C 2.5.2.2: Position n / 2 rounded up to the next integer, but
-        // that counts starting from 1.
-        int index = customers.size() / 2;
-        if (customers.size() % 2 == 0) {
-            index -= 1;
-        }
-        return customers.get(index);
-    }
-
-
-
 }
-
-
-

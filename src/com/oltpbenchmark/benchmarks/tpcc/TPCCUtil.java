@@ -98,7 +98,8 @@ public class TPCCUtil {
 		c.c_balance = rs.getFloat("c_balance");
 		c.c_ytd_payment = rs.getFloat("c_ytd_payment");
 		c.c_payment_cnt = rs.getInt("c_payment_cnt");
-		// c.c_data = rs.getString("c_data");
+		c.c_data = rs.getString("c_data");
+		c.c_id = rs.getInt("c_id");
 		return c;
 	}
 	private static final RandomGenerator ran = new RandomGenerator(0);
