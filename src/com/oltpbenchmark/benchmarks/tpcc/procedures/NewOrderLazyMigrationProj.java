@@ -208,20 +208,13 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		float ol_amount, total_amount = 0;
 		
 		try {
-			try {
-  				conn.setAutoCommit(false);
-				stmtMigration1.setInt(1, w_id);
-				stmtMigration1.setInt(2, d_id);
-				stmtMigration1.setInt(3, c_id);
-				stmtMigration1.executeQuery();
-				stmtMigration2.executeUpdate();
-				conn.commit();
-			}
-			catch(Exception e) {
-				LOG.info(e.getMessage());
-				conn.rollback();
-				throw new RuntimeException(String.format("Error  %s", e.getMessage()), e);
-			}
+	  		conn.setAutoCommit(false);
+			stmtMigration1.setInt(1, w_id);
+			stmtMigration1.setInt(2, d_id);
+			stmtMigration1.setInt(3, c_id);
+			stmtMigration1.executeQuery();
+			stmtMigration2.executeUpdate();
+			conn.commit();
 
 			stmtGetCust.setInt(1, w_id);
 			stmtGetCust.setInt(2, d_id);
