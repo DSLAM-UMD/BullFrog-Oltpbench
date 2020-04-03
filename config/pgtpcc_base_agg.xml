@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<parameters>
+    <dbtype>postgres</dbtype>
+    <driver>org.postgresql.Driver</driver>
+    <DBUrl>jdbc:postgresql://localhost:5435/tpcc</DBUrl>
+    <DBName>tpcc</DBName>
+    <username>postgres</username>
+    <password>postgres</password>
+    <isolation>TRANSACTION_SERIALIZABLE</isolation>
+    <terminals>5</terminals>
+
+    <scalefactor>50</scalefactor>
+    <uploadCode></uploadCode>
+    <uploadUrl></uploadUrl>
+        <transactiontypes bench="tpcc">
+        <transactiontype>
+                <name>NewOrder</name>
+                <id>1</id>
+        </transactiontype>
+        <transactiontype>
+                <name>Payment</name>
+                <id>2</id>
+        </transactiontype>
+        <transactiontype>
+                <name>OrderStatus</name>
+                <id>3</id>
+        </transactiontype>
+        <transactiontype>
+                <name>Delivery</name>
+                <id>4</id>
+        </transactiontype>
+        <transactiontype>
+                <name>StockLevel</name>
+                <id>5</id>
+        </transactiontype>
+        <transactiontype>
+                <name>BaseMigrationAggPhaseOne</name>
+                <id>6</id>
+        </transactiontype>
+        <transactiontype>
+                <name>NewOrderBaseMigrationAgg</name>
+                <id>7</id>
+        </transactiontype>
+        <transactiontype>
+                <name>OrderStatusBaseMigrationAgg</name>
+                <id>8</id>
+        </transactiontype>
+        <transactiontype>
+                <name>DeliveryBaseMigrationAgg</name>
+                <id>9</id>
+        </transactiontype>
+        <transactiontype>
+                <name>StockLevelBaseMigrationAgg</name>
+                <id>10</id>
+        </transactiontype>
+        </transactiontypes>
+
+
+        <works>
+        <work>
+          <time>30</time>
+          <rate>300</rate>
+          <active_terminals>5</active_terminals>
+          <weights bench="tpcc">45, 43, 4, 4, 4, 0, 0, 0, 0, 0</weights>
+        </work>
+        <work>
+          <time>125</time>
+          <rate>300</rate>
+          <active_terminals>1</active_terminals>
+	  <weights bench="tpcc">0, 43, 4, 0, 0, 53, 0, 0, 0, 0</weights>
+        </work>
+        <work>
+          <time>30</time>
+          <rate>300</rate>
+          <active_terminals>5</active_terminals>
+	  <weights bench="tpcc">0, 43, 0, 0, 0, 0, 45, 4, 4, 4</weights>
+        </work>
+        </works>
+</parameters>

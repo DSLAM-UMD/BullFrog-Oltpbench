@@ -31,4 +31,7 @@ public abstract class TPCCConstants {
 
     // projection migration
     public static final String TABLENAME_CUSTOMER_PROJ = "CUSTOMER_PROJ";
+
+    // aggregation migration
+    public static final String TABLENAME_ORDERLINE_AGG = "ORDERLINE_AGG";
 }
