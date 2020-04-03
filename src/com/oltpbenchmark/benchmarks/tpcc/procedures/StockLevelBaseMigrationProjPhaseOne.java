@@ -38,7 +38,7 @@ public class StockLevelBaseMigrationProjPhaseOne extends TPCCProcedure {
     private static final Logger LOG = Logger.getLogger(StockLevelBaseMigrationProjPhaseOne.class);
     private static AtomicLong numRun = new AtomicLong(0);
 
-    private static final String migration =
+    public SQLStmt migrationSQL = new SQLStmt(
             "insert into customer_proj(" +
             " c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, " +
             " c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, " +
@@ -47,7 +47,9 @@ public class StockLevelBaseMigrationProjPhaseOne extends TPCCProcedure {
             " c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, " +
             " c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, " +
             " c_street_1, c_city, c_state, c_zip, c_data" +
-            "  from customer); ";
+            "  from customer); ");
+
+    private PreparedStatement migration = null;
 
     public ResultSet run(Connection conn, Random gen,
             int w_id, int numWarehouses,
@@ -55,19 +57,17 @@ public class StockLevelBaseMigrationProjPhaseOne extends TPCCProcedure {
             TPCCWorker w) throws SQLException {
 
         boolean trace = LOG.isTraceEnabled();
-        // migration txn
-        String[] command = {"/bin/sh", "-c",
-            "echo \"" + migration + "\" | " +
-            DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-            DBWorkload.DB_PORT_NUMBER + " tpcc"};
+
+        migration = this.getPreparedStatement(conn, migrationSQL);
 
         if (numRun.getAndIncrement() == 0) {
-            execCommands(command);
+            migration.executeUpdate();
+            
         }
 
         if (trace) LOG.trace("[baseline] migration proj phase one - customer_proj done!");
 
         conn.commit();
         return null;
-	 }
+	}
 }
