@@ -50,7 +50,7 @@ public class StockLevelBaseMigrationSplit extends TPCCProcedure {
             "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info)" +
             " (select " +
             "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info," +
+            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
             "  from orderline_stock)");
 
     public SQLStmt migrateStockSQL = new SQLStmt(

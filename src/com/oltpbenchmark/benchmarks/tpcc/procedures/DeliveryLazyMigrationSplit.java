@@ -74,9 +74,9 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
 			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
 			" (select " +
 			"  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, " +
+			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
 			"  from orderline_stock) " +
-			"on conflict (ol_o_id,ol_d_id,ol_w_id) do nothing");
+			"on conflict (ol_w_id,ol_d_id,ol_o_id,ol_number) do nothing");
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
 	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE +
@@ -137,7 +137,8 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
         int[] orderIDs;
 
         orderIDs = new int[10];
-        for (d_id = 1; d_id <= terminalDistrictUpperID; d_id++) {
+        // for (d_id = 1; d_id <= 1; d_id++) {
+            d_id = 1;
             delivGetOrderId.setInt(1, d_id);
             delivGetOrderId.setInt(2, w_id);
             if (trace) LOG.trace("delivGetOrderId START");
@@ -147,7 +148,8 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
                 // This district has no new orders
                 // This can happen but should be rare
                 if (trace) LOG.warn(String.format("District has no new orders [W_ID=%d, D_ID=%d]", w_id, d_id));
-                continue;
+                // continue;
+                LOG.info(String.format("District has no new orders [W_ID=%d, D_ID=%d]", w_id, d_id));
             }
 
             int no_o_id = rs.getInt("NO_O_ID");
@@ -210,81 +212,81 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
             migrateOrderLine1.executeQuery();
             migrateOrderLine2.executeUpdate();
 
-            delivUpdateDeliveryDate.setTimestamp(1, timestamp);
-            delivUpdateDeliveryDate.setInt(2, no_o_id);
-            delivUpdateDeliveryDate.setInt(3, d_id);
-            delivUpdateDeliveryDate.setInt(4, w_id);
-            if (trace) LOG.trace("delivUpdateDeliveryDate START");
-            result = delivUpdateDeliveryDate.executeUpdate();
-            if (trace) LOG.trace("delivUpdateDeliveryDate END");
+            // delivUpdateDeliveryDate.setTimestamp(1, timestamp);
+            // delivUpdateDeliveryDate.setInt(2, no_o_id);
+            // delivUpdateDeliveryDate.setInt(3, d_id);
+            // delivUpdateDeliveryDate.setInt(4, w_id);
+            // if (trace) LOG.trace("delivUpdateDeliveryDate START");
+            // result = delivUpdateDeliveryDate.executeUpdate();
+            // if (trace) LOG.trace("delivUpdateDeliveryDate END");
 
-            if (result == 0){
-               String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
-                                          w_id, d_id, no_o_id);
-               if (trace) LOG.warn(msg);
-               throw new RuntimeException(msg);
-            }
+            // if (result == 0){
+            //    String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
+            //                               w_id, d_id, no_o_id);
+            //    if (trace) LOG.warn(msg);
+            //    throw new RuntimeException(msg);
+            // }
 
 
-            delivSumOrderAmount.setInt(1, no_o_id);
-            delivSumOrderAmount.setInt(2, d_id);
-            delivSumOrderAmount.setInt(3, w_id);
-            if (trace) LOG.trace("delivSumOrderAmount START");
-            rs = delivSumOrderAmount.executeQuery();
-            if (trace) LOG.trace("delivSumOrderAmount END");
+            // delivSumOrderAmount.setInt(1, no_o_id);
+            // delivSumOrderAmount.setInt(2, d_id);
+            // delivSumOrderAmount.setInt(3, w_id);
+            // if (trace) LOG.trace("delivSumOrderAmount START");
+            // rs = delivSumOrderAmount.executeQuery();
+            // if (trace) LOG.trace("delivSumOrderAmount END");
 
-            if (!rs.next()) {
-                String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
-                                           w_id, d_id, no_o_id);
-                if (trace) LOG.warn(msg);
-                throw new RuntimeException(msg);
-            }
-            ol_total = rs.getFloat("OL_TOTAL");
-            rs.close();
+            // if (!rs.next()) {
+            //     String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
+            //                                w_id, d_id, no_o_id);
+            //     if (trace) LOG.warn(msg);
+            //     throw new RuntimeException(msg);
+            // }
+            // ol_total = rs.getFloat("OL_TOTAL");
+            // rs.close();
 
-            int idx = 1; // HACK: So that we can debug this query
-            delivUpdateCustBalDelivCnt.setDouble(idx++, ol_total);
-            delivUpdateCustBalDelivCnt.setInt(idx++, w_id);
-            delivUpdateCustBalDelivCnt.setInt(idx++, d_id);
-            delivUpdateCustBalDelivCnt.setInt(idx++, c_id);
-            if (trace) LOG.trace("delivUpdateCustBalDelivCnt START");
-            result = delivUpdateCustBalDelivCnt.executeUpdate();
-            if (trace) LOG.trace("delivUpdateCustBalDelivCnt END");
+            // int idx = 1; // HACK: So that we can debug this query
+            // delivUpdateCustBalDelivCnt.setDouble(idx++, ol_total);
+            // delivUpdateCustBalDelivCnt.setInt(idx++, w_id);
+            // delivUpdateCustBalDelivCnt.setInt(idx++, d_id);
+            // delivUpdateCustBalDelivCnt.setInt(idx++, c_id);
+            // if (trace) LOG.trace("delivUpdateCustBalDelivCnt START");
+            // result = delivUpdateCustBalDelivCnt.executeUpdate();
+            // if (trace) LOG.trace("delivUpdateCustBalDelivCnt END");
 
-            if (result == 0) {
-                String msg = String.format("Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]",
-                                           w_id, d_id, c_id);
-                if (trace) LOG.warn(msg);
-                throw new RuntimeException(msg);
-            }
-        }
+            // if (result == 0) {
+            //     String msg = String.format("Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]",
+            //                                w_id, d_id, c_id);
+            //     if (trace) LOG.warn(msg);
+            //     throw new RuntimeException(msg);
+            // }
+        // }
 
         conn.commit();
          
-        if (trace) {
-            StringBuilder terminalMessage = new StringBuilder();
-            terminalMessage
-                    .append("\n+---------------------------- DELIVERY ---------------------------+\n");
-            terminalMessage.append(" Date: ");
-            terminalMessage.append(TPCCUtil.getCurrentTime());
-            terminalMessage.append("\n\n Warehouse: ");
-            terminalMessage.append(w_id);
-            terminalMessage.append("\n Carrier:   ");
-            terminalMessage.append(o_carrier_id);
-            terminalMessage.append("\n\n Delivered Orders\n");
-            for (int i = 1; i <= TPCCConfig.configDistPerWhse; i++) {
-                if (orderIDs[i - 1] >= 0) {
-                    terminalMessage.append("  District ");
-                    terminalMessage.append(i < 10 ? " " : "");
-                    terminalMessage.append(i);
-                    terminalMessage.append(": Order number ");
-                    terminalMessage.append(orderIDs[i - 1]);
-                    terminalMessage.append(" was delivered.\n");
-                }
-            } // FOR
-            terminalMessage.append("+-----------------------------------------------------------------+\n\n");
-            LOG.trace(terminalMessage.toString());
-        }
+        // if (trace) {
+        //     StringBuilder terminalMessage = new StringBuilder();
+        //     terminalMessage
+        //             .append("\n+---------------------------- DELIVERY ---------------------------+\n");
+        //     terminalMessage.append(" Date: ");
+        //     terminalMessage.append(TPCCUtil.getCurrentTime());
+        //     terminalMessage.append("\n\n Warehouse: ");
+        //     terminalMessage.append(w_id);
+        //     terminalMessage.append("\n Carrier:   ");
+        //     terminalMessage.append(o_carrier_id);
+        //     terminalMessage.append("\n\n Delivered Orders\n");
+        //     for (int i = 1; i <= TPCCConfig.configDistPerWhse; i++) {
+        //         if (orderIDs[i - 1] >= 0) {
+        //             terminalMessage.append("  District ");
+        //             terminalMessage.append(i < 10 ? " " : "");
+        //             terminalMessage.append(i);
+        //             terminalMessage.append(": Order number ");
+        //             terminalMessage.append(orderIDs[i - 1]);
+        //             terminalMessage.append(" was delivered.\n");
+        //         }
+        //     } // FOR
+        //     terminalMessage.append("+-----------------------------------------------------------------+\n\n");
+        //     LOG.trace(terminalMessage.toString());
+        // }
 	
 		return null;
     }

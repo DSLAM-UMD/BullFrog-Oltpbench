@@ -29,9 +29,9 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 
-public class StockLevel extends TPCCProcedure {
+public class StockLevelLazyMigrationSplit extends TPCCProcedure {
 
-    private static final Logger LOG = Logger.getLogger(StockLevel.class);
+    private static final Logger LOG = Logger.getLogger(StockLevelLazyMigrationSplit.class);
 
 	public SQLStmt stockGetDistOrderIdSQL = new SQLStmt(
 	        "SELECT D_NEXT_O_ID " + 
@@ -53,9 +53,9 @@ public class StockLevel extends TPCCProcedure {
 			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
 			" (select " +
 			"  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, " +
+			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
 			"  from orderline_stock) " +
-			"on conflict (ol_o_id,ol_d_id,ol_w_id) do nothing");
+			"on conflict (ol_w_id,ol_d_id,ol_o_id,ol_number) do nothing");
 
 	public final SQLStmt migrateStackSQL1 = new SQLStmt(
 			"migrate 1 orderline_stock " +

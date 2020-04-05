@@ -75,8 +75,8 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 	public final SQLStmt migrateStackSQL1 = new SQLStmt(
 			"migrate 1 orderline_stock " +
 			"explain select count(*) from os_stock_split_v " +
-			"where s_w_id = ?" +
-			"  and s_i_id = ?");
+			"where s_i_id = ?" +
+			"  and s_w_id = ?");
 				
 	public final SQLStmt migrateStackSQL2 = new SQLStmt(
 			"migrate insert into stock(" +
@@ -88,7 +88,7 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 			"  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
 			"  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
 			"  from orderline_stock) " +
-			"on conflict (s_w_id,s_i_id) do nothing");
+			"on conflict (s_i_id,s_w_id) do nothing");
 
 	public final SQLStmt  stmtGetStockSQL = new SQLStmt(
 	        "SELECT S_QUANTITY, S_DATA, S_DIST_01, S_DIST_02, S_DIST_03, S_DIST_04, S_DIST_05, " +
@@ -310,12 +310,12 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 				itemPrices[ol_number - 1] = i_price;
 				itemNames[ol_number - 1] = i_name;
 
-				conn.setAutoCommit(false);
-				migrateStack1.setInt(1, ol_supply_w_id);
-				migrateStack1.setInt(2, ol_i_id);
+				// conn.setAutoCommit(false);
+				migrateStack1.setInt(1, ol_i_id);
+				migrateStack1.setInt(2, ol_supply_w_id);
 				migrateStack1.executeQuery();
 				migrateStack2.executeUpdate();
-				conn.commit();
+				// conn.commit();
 
 				stmtGetStock.setInt(1, ol_i_id);
 				stmtGetStock.setInt(2, ol_supply_w_id);
@@ -430,7 +430,7 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
             if (stmtInsertOrderLine != null)
                 stmtInsertOrderLine.clearBatch();
               if (stmtUpdateStock != null)
-                stmtUpdateStock.clearBatch();
+				stmtUpdateStock.clearBatch();
         }
 
 	}

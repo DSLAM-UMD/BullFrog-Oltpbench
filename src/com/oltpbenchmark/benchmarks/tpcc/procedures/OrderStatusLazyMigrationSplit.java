@@ -57,9 +57,9 @@ public class OrderStatusLazyMigrationSplit extends TPCCProcedure {
             "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
             " (select " +
             "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, " +
+            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
             "  from orderline_stock) " +
-            "on conflict (ol_o_id,ol_d_id,ol_w_id) do nothing");
+            "on conflict (ol_w_id,ol_d_id,ol_o_id,ol_number) do nothing");
 
 	public SQLStmt ordStatGetOrderLinesSQL = new SQLStmt(
 	        "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D " + 
