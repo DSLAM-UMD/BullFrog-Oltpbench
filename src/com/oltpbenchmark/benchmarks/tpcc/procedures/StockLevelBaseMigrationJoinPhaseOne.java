@@ -38,7 +38,7 @@ public class StockLevelBaseMigrationJoinPhaseOne extends TPCCProcedure {
     private static final Logger LOG = Logger.getLogger(StockLevelBaseMigrationJoinPhaseOne.class);
     private static AtomicLong numRun = new AtomicLong(0);
 
-    private static final String migration =
+    public SQLStmt migrationSQL = new SQLStmt(
             "insert into orderline_stock(" +
             " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
@@ -52,22 +52,22 @@ public class StockLevelBaseMigrationJoinPhaseOne extends TPCCProcedure {
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
-            "  where ol_i_id = s_i_id);";
+            "  where ol_i_id = s_i_id);");
+
+    private PreparedStatement migration = null;
 
     public ResultSet run(Connection conn, Random gen,
             int w_id, int numWarehouses,
             int terminalDistrictLowerID, int terminalDistrictUpperID,
             TPCCWorker w) throws SQLException {
 
+
+        migration = this.getPreparedStatement(conn, migrationSQL);
+
         boolean trace = LOG.isTraceEnabled();
-        // migration txn
-        String[] command = {"/bin/sh", "-c",
-            "echo \"" + migration + "\" | " +
-            DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-            DBWorkload.DB_PORT_NUMBER + " tpcc"};
 
         if (numRun.getAndIncrement() == 0) {
-            execCommands(command);
+            migration.executeUpdate();
         }
 
         if (trace) LOG.trace("[baseline] migration join phase one - orderline_stock done!");

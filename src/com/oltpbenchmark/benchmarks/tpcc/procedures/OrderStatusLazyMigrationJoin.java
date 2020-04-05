@@ -46,13 +46,14 @@ public class OrderStatusLazyMigrationJoin extends TPCCProcedure {
             "   AND O_C_ID = ? " +
             " ORDER BY O_ID DESC LIMIT 1");
 
-    String txnFormat =
+    public final SQLStmt migrationSQL1 = new SQLStmt(
             "migrate 2 order_line stock " +
-            " explain select count(*) from orderline_stock_v " +
-            " where ol_o_id = {0,number,#} " +
-            "   and ol_d_id = {1,number,#} " +
-            "   and ol_w_id = {2,number,#}; "
-            +
+            "explain select count(*) from orderline_stock_v " +
+            " where ol_o_id = ? " +
+            "   and ol_d_id = ? " +
+            "   and ol_w_id = ?;");
+
+    public final SQLStmt migrationSQL2 = new SQLStmt(
             "migrate insert into orderline_stock(" +
             " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
@@ -66,7 +67,8 @@ public class OrderStatusLazyMigrationJoin extends TPCCProcedure {
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
-            "  where ol_i_id = s_i_id) ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) DO NOTHING; ";
+            "  where ol_i_id = s_i_id) " +
+            " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) DO NOTHING; ");
 
 	public SQLStmt ordStatGetOrderLinesSQL = new SQLStmt(
 	        "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D " + 
@@ -97,7 +99,9 @@ public class OrderStatusLazyMigrationJoin extends TPCCProcedure {
 	private PreparedStatement ordStatGetNewestOrd = null;
 	private PreparedStatement ordStatGetOrderLines = null;
 	private PreparedStatement payGetCust = null;
-	private PreparedStatement customerByName = null;
+    private PreparedStatement customerByName = null;
+    private PreparedStatement migration1 = null;
+    private PreparedStatement migration2 = null;
 
 
     public ResultSet run(Connection conn, Random gen, int w_id, int numWarehouses, int terminalDistrictLowerID, int terminalDistrictUpperID, TPCCWorker w) throws SQLException {
@@ -108,6 +112,8 @@ public class OrderStatusLazyMigrationJoin extends TPCCProcedure {
         customerByName = this.getPreparedStatement(conn, customerByNameSQL);
         ordStatGetNewestOrd = this.getPreparedStatement(conn, ordStatGetNewestOrdSQL);
         ordStatGetOrderLines = this.getPreparedStatement(conn, ordStatGetOrderLinesSQL);
+        migration1 = this.getPreparedStatement(conn, migrationSQL1);
+        migration2 = this.getPreparedStatement(conn, migrationSQL2);
 
         int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
         boolean c_by_name = false;
@@ -159,15 +165,11 @@ public class OrderStatusLazyMigrationJoin extends TPCCProcedure {
         o_entry_d = rs.getTimestamp("O_ENTRY_D");
         rs.close();
 
-        // migration txn
-        String migration = MessageFormat.format(txnFormat,
-            o_id, d_id, w_id);
-        // LOG.info(migration);
-        String[] command = {"/bin/sh", "-c",
-            "echo \"" + migration + "\" | " +
-            DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-            DBWorkload.DB_PORT_NUMBER + " tpcc"};
-        execCommands(command);
+        migration1.setInt(1, o_id);
+        migration1.setInt(2, d_id);
+        migration1.setInt(3, w_id);
+        migration1.executeQuery();
+        migration2.executeUpdate();
 
         // retrieve the order lines for the most recent order
         ordStatGetOrderLines.setInt(1, o_id);

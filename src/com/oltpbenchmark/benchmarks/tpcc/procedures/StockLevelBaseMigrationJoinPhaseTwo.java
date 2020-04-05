@@ -41,17 +41,19 @@ public class StockLevelBaseMigrationJoinPhaseTwo extends TPCCProcedure {
 	        " WHERE D_W_ID = ? " +
             " AND D_ID = ?");
 
-    public static final String queryFormat =
-            "select count(distinct (s_i_id)) as stock_count " +
-            " from " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
-            " where ol_w_id = {0,number,#} " +
-            " and ol_d_id = {1,number,#} " +
-            " and ol_o_id < {2,number,#} " +
-            " and ol_o_id >= {3,number,#} " +
-            " and s_w_id = {4,number,#} " +
-            " and s_quantity < {5,number,#};";
+    public SQLStmt stockGetCountStockSQL = new SQLStmt(
+            "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT " +
+            " FROM " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
+            " WHERE OL_W_ID = ?" +
+            " AND OL_D_ID = ?" +
+            " AND OL_O_ID < ?" +
+            " AND OL_O_ID >= ?" +
+            " AND S_W_ID = ?" +
+            " AND S_I_ID = OL_I_ID" + 
+            " AND S_QUANTITY < ?");
 
     private PreparedStatement stockGetDistOrderId = null;
+    private PreparedStatement stockGetCountStock = null;
 
     public ResultSet run(Connection conn, Random gen,
             int w_id, int numWarehouses,
@@ -61,6 +63,7 @@ public class StockLevelBaseMigrationJoinPhaseTwo extends TPCCProcedure {
         boolean trace = LOG.isTraceEnabled(); 
 
         stockGetDistOrderId = this.getPreparedStatement(conn, stockGetDistOrderIdSQL);
+        stockGetCountStock = this.getPreparedStatement(conn, stockGetCountStockSQL);
 
         int threshold = TPCCUtil.randomNumber(10, 20, gen);
         int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
@@ -80,19 +83,42 @@ public class StockLevelBaseMigrationJoinPhaseTwo extends TPCCProcedure {
         o_id = rs.getInt("D_NEXT_O_ID");
         rs.close();
 
-        // query
-        String query = MessageFormat.format(queryFormat,
-            w_id, d_id, o_id, o_id - 20, w_id, threshold);
+        stockGetCountStock.setInt(1, w_id);
+        stockGetCountStock.setInt(2, d_id);
+        stockGetCountStock.setInt(3, o_id);
+        stockGetCountStock.setInt(4, o_id - 20);
+        stockGetCountStock.setInt(5, w_id);
+        stockGetCountStock.setInt(6, threshold);
+        if (trace) LOG.trace(String.format("stockGetCountStock BEGIN [W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, o_id));
+        rs = stockGetCountStock.executeQuery();
+        if (trace) LOG.trace("stockGetCountStock END");
 
-        String[] command = {"/bin/sh", "-c",
-            "echo '" + query + "' | " +
-            DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-            DBWorkload.DB_PORT_NUMBER + " tpcc"};
-        execCommands(command);
-
-        if (trace) LOG.trace("[baseline] migration join phase two - query done!");
+        if (!rs.next()) {
+            String msg = String.format("Failed to get StockLevel result for COUNT query " +
+                                       "[W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, o_id);
+            if (trace) LOG.warn(msg);
+            throw new RuntimeException(msg);
+        }
+        stock_count = rs.getInt("STOCK_COUNT");
+        if (trace) LOG.trace("stockGetCountStock RESULT=" + stock_count);
 
         conn.commit();
+        rs.close();
+
+        if (trace) {
+            StringBuilder terminalMessage = new StringBuilder();
+            terminalMessage.append("\n+-------------------------- STOCK-LEVEL --------------------------+");
+            terminalMessage.append("\n Warehouse: ");
+            terminalMessage.append(w_id);
+            terminalMessage.append("\n District:  ");
+            terminalMessage.append(d_id);
+            terminalMessage.append("\n\n Stock Level Threshold: ");
+            terminalMessage.append(threshold);
+            terminalMessage.append("\n Low Stock Count:       ");
+            terminalMessage.append(stock_count);
+            terminalMessage.append("\n+-----------------------------------------------------------------+\n\n");
+            LOG.trace(terminalMessage.toString());
+        }
 
         return null;
 	 }

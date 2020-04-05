@@ -63,29 +63,30 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
 	        "   AND O_D_ID = ?" +
 			"   AND O_W_ID = ?");
 
-    String txnFormat =
+    public final SQLStmt migrationSQL1 = new SQLStmt(
             "migrate 2 order_line stock " +
-            " explain select count(*) from orderline_stock_v " +
-            " where ol_o_id = {0,number,#} " +
-            "   and ol_d_id = {1,number,#} " +
-            "   and ol_w_id = {2,number,#}; "
-            +
-            " migrate insert into orderline_stock(" +
+            "explain select count(*) from orderline_stock_v " +
+            " where ol_o_id = ? " +
+            "   and ol_d_id = ? " +
+            "   and ol_w_id = ?;");
+
+    public final SQLStmt migrationSQL2 = new SQLStmt(
+            "migrate insert into orderline_stock(" +
             " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
             " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
             " s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             " s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
             " (select " +
-            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, CURRENT_TIMESTAMP, " +
+            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
             "  s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
             "  where ol_i_id = s_i_id) " +
-	        " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) " +
-            " DO UPDATE SET ol_delivery_d = CURRENT_TIMESTAMP;";
+            " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) " +
+            " DO UPDATE SET ol_delivery_d = ?;");
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
 	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
@@ -117,7 +118,9 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
 	private PreparedStatement delivUpdateCarrierId = null;
 	private PreparedStatement delivUpdateDeliveryDate = null;
 	private PreparedStatement delivSumOrderAmount = null;
-	private PreparedStatement delivUpdateCustBalDelivCnt = null;
+    private PreparedStatement delivUpdateCustBalDelivCnt = null;
+    private PreparedStatement migration1 = null;
+    private PreparedStatement migration2 = null;
 
 
     public ResultSet run(Connection conn, Random gen,
@@ -135,7 +138,9 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
 		delivUpdateCarrierId = this.getPreparedStatement(conn, delivUpdateCarrierIdSQL);
 		delivUpdateDeliveryDate = this.getPreparedStatement(conn, delivUpdateDeliveryDateSQL);
 		delivSumOrderAmount = this.getPreparedStatement(conn, delivSumOrderAmountSQL);
-		delivUpdateCustBalDelivCnt = this.getPreparedStatement(conn, delivUpdateCustBalDelivCntSQL);
+        delivUpdateCustBalDelivCnt = this.getPreparedStatement(conn, delivUpdateCustBalDelivCntSQL);
+        migration1 = this.getPreparedStatement(conn, migrationSQL1);
+        migration2 = this.getPreparedStatement(conn, migrationSQL2);
 
 		int d_id, c_id;
         float ol_total = 0;
@@ -209,16 +214,12 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
                 throw new RuntimeException(msg);
             }
 
-
-            // migration txn
-            String migration = MessageFormat.format(txnFormat,
-                no_o_id, d_id, w_id, no_o_id, d_id, w_id);
-            // LOG.info(migration);
-            String[] command = {"/bin/sh", "-c",
-                "echo \"" + migration + "\" | " +
-                DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-                DBWorkload.DB_PORT_NUMBER + " tpcc"};
-            execCommands(command);
+            migration1.setInt(1, no_o_id);
+            migration1.setInt(2, d_id);
+            migration1.setInt(3, w_id);
+            migration1.executeQuery();
+            migration2.setTimestamp(1, timestamp);
+            migration2.executeUpdate();
 
             delivSumOrderAmount.setInt(1, no_o_id);
             delivSumOrderAmount.setInt(2, d_id);
