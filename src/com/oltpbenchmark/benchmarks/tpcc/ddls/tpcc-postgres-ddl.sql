@@ -243,21 +243,17 @@ CREATE OR REPLACE VIEW customer_proj_v AS
 -- aggregation migration
 DROP TABLE IF EXISTS orderline_agg CASCADE;
 CREATE TABLE orderline_agg (
-  ol_w_id int NOT NULL,
-  ol_d_id int NOT NULL,
+  ol_amount_sum decimal(12,2) NOT NULL,
+  ol_quantity_avg decimal(4,0) NOT NULL,
   ol_o_id int NOT NULL,
-  ol_number int NOT NULL,
-  ol_i_id int NOT NULL,
-  ol_delivery_d timestamp NULL DEFAULT NULL,
-  ol_amount decimal(6,2) NOT NULL,
-  ol_supply_w_id int NOT NULL,
-  ol_quantity decimal(2,0) NOT NULL,
-  ol_dist_info char(24) NOT NULL,
-  PRIMARY KEY (ol_w_id,ol_d_id,ol_o_id,ol_number)
+  ol_d_id int NOT NULL,
+  ol_w_id int NOT NULL,
+  PRIMARY KEY (ol_o_id, ol_d_id, ol_w_id)
 );
 
 CREATE OR REPLACE VIEW orderline_agg_v AS
 (
-  SELECT *
+  SELECT sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id
   FROM order_line
+  GROUP BY ol_o_id, ol_d_id, ol_w_id
 );

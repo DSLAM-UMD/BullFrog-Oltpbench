@@ -63,33 +63,40 @@ public class DeliveryLazyMigrationAgg extends TPCCProcedure {
 	        "   AND O_D_ID = ?" +
 			"   AND O_W_ID = ?");
 
-    String txnFormat =
-            "migrate 1 order_line " +
-            " explain select count(*) from orderline_agg_v " +
-            " where ol_o_id = {0,number,#} " +
-            "   and ol_d_id = {1,number,#} " +
-            "   and ol_w_id = {2,number,#}; "
-            +
-            " migrate insert into orderline_agg(" +
-            " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
-            " (select " +
-            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, CURRENT_TIMESTAMP, " +
-            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
-            "  from order_line " +
-            "  group by ol_w_id, ol_d_id, ol_o_id, ol_number) " +
-	        " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) " +
-            " DO UPDATE SET ol_delivery_d = CURRENT_TIMESTAMP;";
+            
+
+    // String txnFormat =
+    //         "migrate 1 order_line " +
+    //         " explain select count(*) from orderline_agg_v " +
+    //         " where ol_o_id = {0,number,#} " +
+    //         "   and ol_d_id = {1,number,#} " +
+    //         "   and ol_w_id = {2,number,#}; "
+    //         +
+    //         " migrate insert into orderline_agg(" +
+    //         " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +
+    //         " (select " +
+    //         "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+    //         "  from order_line " +
+    //         "  group by ol_o_id, ol_d_id, ol_w_id); ";
+	//         // " ON CONFLICT (ol_o_id,ol_d_id,ol_w_id) " +
+    //         // " DO NOTHING;";
+
+    String txnFormat = 
+            "insert into " + TPCCConstants.TABLENAME_ORDERLINE_AGG + "(select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+            " from order_line where ol_o_id = {0,number,#} and ol_d_id = {1,number,#} and ol_w_id = {2,number,#}" + 
+            " group by ol_o_id, ol_d_id, ol_w_id);";
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
-	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE_AGG +
+	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE +
 	        "   SET OL_DELIVERY_D = ? " +
 			" WHERE OL_O_ID = ? " +
 			"   AND OL_D_ID = ? " +
 			"   AND OL_W_ID = ? ");
 
+    
+
 	public SQLStmt delivSumOrderAmountSQL = new SQLStmt(
-	        "SELECT SUM(OL_AMOUNT) AS OL_TOTAL " +
+	        "SELECT SUM(OL_AMOUNT_SUM) AS OL_TOTAL " +
 			"  FROM " + TPCCConstants.TABLENAME_ORDERLINE_AGG + 
 			" WHERE OL_O_ID = ? " +
 			"   AND OL_D_ID = ? " +
@@ -208,6 +215,7 @@ public class DeliveryLazyMigrationAgg extends TPCCProcedure {
             String migration = MessageFormat.format(txnFormat,
                 no_o_id, d_id, w_id);
             // LOG.info(migration);
+
             String[] command = {"/bin/sh", "-c",
                 "echo \"" + migration + "\" | " +
                 DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +

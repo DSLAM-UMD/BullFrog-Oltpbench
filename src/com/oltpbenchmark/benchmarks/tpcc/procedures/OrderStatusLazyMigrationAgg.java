@@ -46,26 +46,32 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
             "   AND O_C_ID = ? " +
             " ORDER BY O_ID DESC LIMIT 1");
 
-    String txnFormat =
-            "migrate 1 order_line " +
-            " explain select count(*) from orderline_agg_v " +
-            " where ol_o_id = {0,number,#} " +
-            "   and ol_d_id = {1,number,#} " +
-            "   and ol_w_id = {2,number,#}; "
-            +
-            "migrate insert into orderline_agg(" +
-            " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
-            " (select " +
-            "  sum(ol_w_id), ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
-            "  from order_line " +
-            "  group by ol_w_id, ol_d_id, ol_o_id, ol_number) " + 
-            "  ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) DO NOTHING; ";
+    // String txnFormat =
+    //         "migrate 1 order_line " +
+    //         " explain select count(*) from orderline_agg_v " +
+    //         " where ol_o_id = {0,number,#} " +
+    //         "   and ol_d_id = {1,number,#} " +
+    //         "   and ol_w_id = {2,number,#}; "
+    //         +
+    //         " migrate insert into orderline_agg(" +
+    //         " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +
+    //         " (select " +
+    //         "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+    //         "  from order_line " +
+    //         "  group by ol_o_id, ol_d_id, ol_w_id); ";
+	//         // " ON CONFLICT (ol_o_id,ol_d_id,ol_w_id) " +
+    //         // " DO NOTHING;";
+
+    String txnFormat = 
+            "insert into " + TPCCConstants.TABLENAME_ORDERLINE_AGG + "(select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+            " from order_line where ol_o_id = {0,number,#} and ol_d_id = {1,number,#} and ol_w_id = {2,number,#}" + 
+            " group by ol_o_id, ol_d_id, ol_w_id);";
+
+    
 
 	public SQLStmt ordStatGetOrderLinesSQL = new SQLStmt(
 	        "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D " + 
-            "  FROM " + TPCCConstants.TABLENAME_ORDERLINE_AGG + 
+            "  FROM " + TPCCConstants.TABLENAME_ORDERLINE + 
             " WHERE OL_O_ID = ?" + 
             "   AND OL_D_ID = ?" + 
             "   AND OL_W_ID = ?");
@@ -163,6 +169,7 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
             DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
             DBWorkload.DB_PORT_NUMBER + " tpcc"};
         execCommands(command);
+
 
         // retrieve the order lines for the most recent order
         ordStatGetOrderLines.setInt(1, o_id);

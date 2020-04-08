@@ -21,9 +21,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
+import java.text.MessageFormat;
 
 import org.apache.log4j.Logger;
 
+import com.oltpbenchmark.DBWorkload;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
@@ -89,9 +91,30 @@ public class NewOrderLazyMigrationAgg extends TPCCProcedure {
             "   AND S_W_ID = ?");
 
 	public final SQLStmt  stmtInsertOrderLineSQL = new SQLStmt(
-	        "INSERT INTO " + TPCCConstants.TABLENAME_ORDERLINE_AGG + 
+	        "INSERT INTO " + TPCCConstants.TABLENAME_ORDERLINE + 
 	        " (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) " +
             " VALUES (?,?,?,?,?,?,?,?,?)");
+	
+	// String txnFormat =
+    //         "migrate 1 order_line " +
+    //         " explain select count(*) from orderline_agg_v " +
+    //         " where ol_o_id = {0,number,#} " +
+    //         "   and ol_d_id = {1,number,#} " +
+    //         "   and ol_w_id = {2,number,#}; "
+    //         +
+    //         " migrate insert into orderline_agg(" +
+    //         " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +
+    //         " (select " +
+    //         "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+    //         "  from order_line " +
+    //         "  group by ol_o_id, ol_d_id, ol_w_id); ";
+	//         // " ON CONFLICT (ol_o_id,ol_d_id,ol_w_id) " +
+    //         // " DO NOTHING;";
+
+	String txnFormat = 
+            "insert into " + TPCCConstants.TABLENAME_ORDERLINE_AGG + "(select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+            " from order_line where ol_o_id = {0,number,#} and ol_d_id = {1,number,#} and ol_w_id = {2,number,#}" + 
+            " group by ol_o_id, ol_d_id, ol_w_id) on conflict (ol_o_id, ol_d_id, ol_w_id) do nothing;";
 
 
 	// NewOrder Txn
@@ -261,6 +284,15 @@ public class NewOrderLazyMigrationAgg extends TPCCProcedure {
 			stmtInsertOOrder.executeUpdate();
 			change order]]*/
 
+			String migration = MessageFormat.format(txnFormat,
+				o_id, d_id, w_id);
+				// LOG.info(migration);
+				String[] command = {"/bin/sh", "-c",
+					"echo \"" + migration + "\" | " +
+					DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
+					DBWorkload.DB_PORT_NUMBER + " tpcc"};
+				execCommands(command);
+
 			for (int ol_number = 1; ol_number <= o_ol_cnt; ol_number++) {
 				ol_supply_w_id = supplierWarehouseIDs[ol_number - 1];
 				ol_i_id = itemIDs[ol_number - 1];
@@ -386,10 +418,14 @@ public class NewOrderLazyMigrationAgg extends TPCCProcedure {
 				stmtInsertOrderLine.setString(9, ol_dist_info);
 				stmtInsertOrderLine.addBatch();
 
+				
+
 			} // end-for
 
 			stmtInsertOrderLine.executeBatch();
 			stmtUpdateStock.executeBatch();
+
+			
 
 			total_amount *= (1 + w_tax + d_tax) * (1 - c_discount);
 		} catch(UserAbortException userEx)
