@@ -63,7 +63,7 @@
           <weights bench="tpcc">45, 43, 4, 4, 4, 0, 0, 0, 0, 0</weights>
         </work>
         <work>
-          <time>360</time>
+          <time>700</time>
           <rate>1000</rate>
 	  <weights bench="tpcc">0, 43, 4, 0, 0, 53, 0, 0, 0, 0</weights>
         </work>
