@@ -70,7 +70,7 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             "   and ol_d_id = ? " +
             "   and ol_w_id = ?;");
 
-    public final SQLStmt migrationSQL2 = new SQLStmt(
+    public SQLStmt migrationSQL2 = new SQLStmt(
             "migrate insert into orderline_stock(" +
             " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
@@ -78,15 +78,13 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             " s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             " s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
             " (select " +
-            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ?, " +
             "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
             "  s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
-            "  where ol_i_id = s_i_id) " +
-            " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) " +
-            " DO UPDATE SET ol_delivery_d = ?;");
+            "  where ol_i_id = s_i_id) ");
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
 	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
@@ -127,7 +125,27 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
 			int w_id, int numWarehouses,
 			int terminalDistrictLowerID, int terminalDistrictUpperID,
 			TPCCWorker w) throws SQLException {
-		
+        
+        if (DBWorkload.IS_CONFLICT) {
+            migrationSQL2 = new SQLStmt(
+                "migrate insert into orderline_stock(" +
+                " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+                " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
+                " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
+                " s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
+                " s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
+                " (select " +
+                "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+                "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
+                "  s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
+                "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
+                "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
+                "  from order_line, stock " +
+                "  where ol_i_id = s_i_id) " +
+                " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number,s_w_id,s_i_id) " +
+                " DO UPDATE SET ol_delivery_d = ?;");            
+        }
+
         boolean trace = LOG.isDebugEnabled();
         int o_carrier_id = TPCCUtil.randomNumber(1, 10, gen);
         Timestamp timestamp = w.getBenchmarkModule().getTimestamp(System.currentTimeMillis());

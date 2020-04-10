@@ -64,6 +64,7 @@ public class DBWorkload {
     public static String DB_BINARY_PATH = "/home/gangliao/so-postgres/postgresql-11.0/dev/bin";
     public static int MIGRATION_TXN_ID = -1;
     public static boolean IS_MIGRATED = false;
+    public static boolean IS_CONFLICT = false;
     
     /**
      * @param args
@@ -167,6 +168,7 @@ public class DBWorkload {
         options.addOption(null, "dialects-export", true, "Export benchmark SQL to a dialects file");
         options.addOption(null, "output-raw", true, "Output raw data");
         options.addOption(null, "output-samples", true, "Output sample data");
+        options.addOption(null, "on-conflict", true, "Enable On Conflict Clause for Migration");
 
 
         // parse the command line arguments
@@ -191,9 +193,9 @@ public class DBWorkload {
             printUsage(options);
             return;
         }
-        
-        
-        
+
+
+
         // Seconds
         int intervalMonitor = 0;
         if (argsLine.hasOption("im")) {
@@ -209,6 +211,11 @@ public class DBWorkload {
             MIGRATION_TXN_ID = Integer.parseInt(argsLine.getOptionValue("migration"));
             LOG.info("migration txn id: " + MIGRATION_TXN_ID);
         }
+
+        if (argsLine.hasOption("on-conflict")) {
+            IS_CONFLICT = true;
+        }
+        LOG.info("Enable on-conflict clause: " + IS_CONFLICT);
 
         String targetBenchmarks = argsLine.getOptionValue("b");
         

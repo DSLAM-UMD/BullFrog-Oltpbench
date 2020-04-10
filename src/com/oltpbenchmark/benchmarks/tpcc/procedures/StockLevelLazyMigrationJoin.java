@@ -51,7 +51,7 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
             " and s_w_id = ? " +
             " and s_quantity < ?;");
     
-    public final SQLStmt migrationSQL2 = new SQLStmt(
+    public SQLStmt migrationSQL2 = new SQLStmt(
             "migrate insert into orderline_stock(" +
             " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
@@ -65,8 +65,7 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
-            "  where ol_i_id = s_i_id) " +
-            " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) DO NOTHING; ");
+            "  where ol_i_id = s_i_id)");
 
     public SQLStmt stockGetCountStockSQL = new SQLStmt(
             "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT " +
@@ -87,6 +86,26 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
             int w_id, int numWarehouses,
             int terminalDistrictLowerID, int terminalDistrictUpperID,
             TPCCWorker w) throws SQLException {
+
+        if (DBWorkload.IS_CONFLICT) {
+            migrationSQL2 = new SQLStmt(
+                "migrate insert into orderline_stock(" +
+                " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+                " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
+                " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
+                " s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
+                " s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
+                " (select " +
+                "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+                "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
+                "  s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
+                "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
+                "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
+                "  from order_line, stock " +
+                "  where ol_i_id = s_i_id) " +
+                " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number,s_w_id,s_i_id) " +
+                " DO DOTHING;");
+        }
 
         boolean trace = LOG.isTraceEnabled(); 
         
