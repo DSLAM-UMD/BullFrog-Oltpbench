@@ -49,7 +49,7 @@ public class StockLevelBaseMigrationJoinPhaseTwo extends TPCCProcedure {
             " AND OL_O_ID < ?" +
             " AND OL_O_ID >= ?" +
             " AND S_W_ID = ?" +
-            " AND S_I_ID = OL_I_ID" + 
+            // " AND S_I_ID = OL_I_ID" + 
             " AND S_QUANTITY < ?");
 
     private PreparedStatement stockGetDistOrderId = null;
