@@ -122,7 +122,7 @@ public class OrderStatusLazyMigrationJoin extends TPCCProcedure {
                 "  from order_line, stock " +
                 "  where ol_i_id = s_i_id) " +
                 " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number,s_w_id,s_i_id) " +
-                " DO DOTHING;");
+                " DO NOTHING;");
         }
 
         boolean trace = LOG.isTraceEnabled();
