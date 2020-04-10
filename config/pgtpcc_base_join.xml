@@ -60,19 +60,16 @@
         <work>
           <time>60</time>
           <rate>1000</rate>
-          <active_terminals>5</active_terminals>
           <weights bench="tpcc">45, 43, 4, 4, 4, 0, 0, 0, 0, 0</weights>
         </work>
         <work>
           <time>360</time>
           <rate>1000</rate>
-          <active_terminals>1</active_terminals>
 	  <weights bench="tpcc">0, 43, 4, 0, 0, 53, 0, 0, 0, 0</weights>
         </work>
         <work>
           <time>60</time>
           <rate>1000</rate>
-          <active_terminals>5</active_terminals>
 	  <weights bench="tpcc">0, 43, 0, 0, 0, 0, 45, 4, 4, 4</weights>
         </work>
         </works>
