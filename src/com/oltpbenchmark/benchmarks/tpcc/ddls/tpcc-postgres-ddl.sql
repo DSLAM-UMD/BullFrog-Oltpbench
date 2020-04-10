@@ -190,7 +190,7 @@ CREATE TABLE orderline_stock (
   s_dist_08 char(24) NOT NULL,
   s_dist_09 char(24) NOT NULL,
   s_dist_10 char(24) NOT NULL,
-  PRIMARY KEY (ol_w_id,ol_d_id,ol_o_id,ol_number)
+  PRIMARY KEY (s_w_id,s_i_id,ol_w_id,ol_d_id,ol_o_id,ol_number)
 );
 
 CREATE INDEX FKEY_STOCK_2 ON STOCK (S_I_ID);
