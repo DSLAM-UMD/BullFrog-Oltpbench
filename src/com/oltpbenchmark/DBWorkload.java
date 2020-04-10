@@ -168,7 +168,7 @@ public class DBWorkload {
         options.addOption(null, "dialects-export", true, "Export benchmark SQL to a dialects file");
         options.addOption(null, "output-raw", true, "Output raw data");
         options.addOption(null, "output-samples", true, "Output sample data");
-        options.addOption(null, "on-conflict", true, "Enable On Conflict Clause for Migration");
+        options.addOption(null, "on-conflict", false, "Enable On Conflict Clause for Migration");
 
 
         // parse the command line arguments
