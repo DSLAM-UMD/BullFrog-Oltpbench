@@ -193,11 +193,11 @@ CREATE TABLE orderline_stock (
   s_dist_10 char(24) NOT NULL
 );
 
--- CREATE INDEX FKEY_STOCK_2 ON STOCK (S_I_ID);
+CREATE INDEX FKEY_STOCK_2 ON STOCK (S_I_ID);
 CREATE INDEX s_order_1 ON stock (s_w_id, s_quantity);
 CREATE INDEX s_order_2 ON stock (s_w_id, s_i_id);
 
--- CREATE INDEX FKEY_ORDER_LINE_2 ON ORDER_LINE (OL_I_ID);
+CREATE INDEX FKEY_ORDER_LINE_2 ON ORDER_LINE (OL_I_ID);
 CREATE INDEX ol_order_1 ON order_line (ol_o_id, ol_d_id, ol_w_id);
 
 CREATE INDEX os_order_1 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id);
