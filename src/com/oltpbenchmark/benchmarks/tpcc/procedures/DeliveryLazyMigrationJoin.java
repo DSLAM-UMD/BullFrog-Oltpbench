@@ -78,7 +78,7 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             " s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             " s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
             " (select " +
-            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ?, " +
+            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
             "  s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
@@ -143,7 +143,7 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
                 "  from order_line, stock " +
                 "  where ol_i_id = s_i_id) " +
                 " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number,s_w_id,s_i_id) " +
-                " DO UPDATE SET ol_delivery_d = ?;");            
+                " DO NOTHING;");
         }
 
         boolean trace = LOG.isDebugEnabled();
@@ -236,8 +236,22 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             migration1.setInt(2, d_id);
             migration1.setInt(3, w_id);
             migration1.executeQuery();
-            migration2.setTimestamp(1, timestamp);
             migration2.executeUpdate();
+
+            delivUpdateDeliveryDate.setTimestamp(1, timestamp);
+            delivUpdateDeliveryDate.setInt(2, no_o_id);
+            delivUpdateDeliveryDate.setInt(3, d_id);
+            delivUpdateDeliveryDate.setInt(4, w_id);
+            if (trace) LOG.trace("delivUpdateDeliveryDate START");
+            result = delivUpdateDeliveryDate.executeUpdate();
+            if (trace) LOG.trace("delivUpdateDeliveryDate END");
+
+            if (result == 0){
+                String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
+                                           w_id, d_id, no_o_id);
+                if (trace) LOG.warn(msg);
+                throw new RuntimeException(msg);
+            }
 
             delivSumOrderAmount.setInt(1, no_o_id);
             delivSumOrderAmount.setInt(2, d_id);

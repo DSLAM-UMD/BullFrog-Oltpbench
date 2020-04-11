@@ -77,7 +77,7 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
             "       S_DIST_06, S_DIST_07, S_DIST_08, S_DIST_09, S_DIST_10, S_YTD, S_ORDER_CNT, S_REMOTE_CNT " +
             "  FROM " + TPCCConstants.TABLENAME_STOCK + 
             " WHERE S_I_ID = ? " +
-            "   AND S_W_ID = ? FOR UPDATE");
+            "   AND S_W_ID = ?");
 
 	public final SQLStmt  stmtInsertOrderLineSQL = new SQLStmt(
 			"INSERT INTO " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
