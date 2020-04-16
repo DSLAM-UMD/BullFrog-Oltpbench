@@ -18,6 +18,7 @@ package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
@@ -43,7 +44,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			"  and c_d_id = ?" +
 			"  and c_id = ?;");
 
-	public final SQLStmt  migrationSQL2 = new SQLStmt(
+	public String migrationSQL2 =
 			"migrate insert into customer_proj(" +
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
@@ -52,8 +53,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
 			"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
 			"  c_city, c_state, c_zip, c_data " +
-			" from customer) " +
-			"on conflict (c_w_id,c_d_id,c_id) do nothing;");
+			" from customer);";
 
 	public final SQLStmt stmtGetCustSQL = new SQLStmt(
 			"SELECT C_DISCOUNT, C_LAST, C_CREDIT" +
@@ -70,7 +70,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
     public final SQLStmt stmtGetDistSQL = new SQLStmt(
     		"SELECT D_NEXT_O_ID, D_TAX " +
 	        "  FROM " + TPCCConstants.TABLENAME_DISTRICT +
-	        " WHERE D_W_ID = ? AND D_ID = ? FOR UPDATE");
+	        " WHERE D_W_ID = ? AND D_ID = ?");
 
 	public final SQLStmt  stmtInsertNewOrderSQL = new SQLStmt(
 	        "INSERT INTO " + TPCCConstants.TABLENAME_NEWORDER +
@@ -127,13 +127,27 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 	private PreparedStatement stmtUpdateStock = null;
 	private PreparedStatement stmtInsertOrderLine = null;
 	private PreparedStatement stmtMigration1 = null;
-	private PreparedStatement stmtMigration2 = null;
+	// private PreparedStatement stmtMigration2 = null;
+	private Statement stmt = null;
 
     public ResultSet run(Connection conn, Random gen,
 			int terminalWarehouseID, int numWarehouses,
 			int terminalDistrictLowerID, int terminalDistrictUpperID,
 			TPCCWorker w) throws SQLException {
 
+        if (DBWorkload.IS_CONFLICT) {
+			migrationSQL2 =
+				"migrate insert into customer_proj(" +
+				"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+				"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+				"  c_city, c_state, c_zip, c_data) " +
+				"(select " +
+				"  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+				"  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+				"  c_city, c_state, c_zip, c_data " +
+				" from customer) " +
+				"on conflict (c_w_id,c_d_id,c_id) do nothing;";
+		}
 
 
 		//initializing all prepared statements
@@ -148,8 +162,8 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		stmtUpdateStock =this.getPreparedStatement(conn, stmtUpdateStockSQL);
 		stmtInsertOrderLine =this.getPreparedStatement(conn, stmtInsertOrderLineSQL);
 		stmtMigration1 = this.getPreparedStatement(conn, migrationSQL1);
-		stmtMigration2 = this.getPreparedStatement(conn, migrationSQL2);
-
+		// stmtMigration2 = this.getPreparedStatement(conn, migrationSQL2);
+		stmt = conn.createStatement();
 
 		int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
 		int customerID = TPCCUtil.getCustomerID(gen);
@@ -208,12 +222,12 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		float ol_amount, total_amount = 0;
 		
 		try {
-	  		conn.setAutoCommit(false);
 			stmtMigration1.setInt(1, w_id);
 			stmtMigration1.setInt(2, d_id);
 			stmtMigration1.setInt(3, c_id);
+	  		conn.setAutoCommit(false);
 			stmtMigration1.executeQuery();
-			stmtMigration2.executeUpdate();
+			stmt.executeUpdate(migrationSQL2);
 			conn.commit();
 
 			stmtGetCust.setInt(1, w_id);
@@ -433,7 +447,8 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
             if (stmtInsertOrderLine != null)
                 stmtInsertOrderLine.clearBatch();
               if (stmtUpdateStock != null)
-                stmtUpdateStock.clearBatch();
+				stmtUpdateStock.clearBatch();
+			if (stmt != null) { stmt.close(); }
         }
 
 	}

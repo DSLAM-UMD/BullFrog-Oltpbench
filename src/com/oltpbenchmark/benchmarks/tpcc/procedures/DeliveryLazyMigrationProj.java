@@ -18,6 +18,7 @@ package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -75,7 +76,15 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 			"  FROM " + TPCCConstants.TABLENAME_ORDERLINE + 
 			" WHERE OL_O_ID = ? " +
 			"   AND OL_D_ID = ? " +
-			"   AND OL_W_ID = ?");
+            "   AND OL_W_ID = ?");
+            
+    public SQLStmt delivUpdateCustBalDelivCntSQL = new SQLStmt(
+            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
+            "   SET C_BALANCE = C_BALANCE + ?," +
+            "       C_DELIVERY_CNT = C_DELIVERY_CNT + 1 " +
+            " WHERE C_W_ID = ? " +
+            "   AND C_D_ID = ? " +
+            "   AND C_ID = ? ");
 
     public final SQLStmt migrationSQL1 = new SQLStmt(
             "migrate 1 customer " +
@@ -84,7 +93,7 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             "  and c_d_id = ?" +
             "  and c_id = ?;");
     
-    public final SQLStmt migrationSQL2 = new SQLStmt(
+    public String migrationSQL2 =
             "migrate insert into customer_proj(" +
             "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
             "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
@@ -93,10 +102,7 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
             "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
             "  c_city, c_state, c_zip, c_data " +
-            "from customer) " +
-            "on conflict (c_w_id,c_d_id,c_id) " +
-            "do update set c_balance = customer_proj.c_balance + ?," +
-            " c_delivery_cnt = customer_proj.c_delivery_cnt + 1;");
+            "from customer);";
 
 
 	// Delivery Txn
@@ -107,12 +113,28 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 	private PreparedStatement delivUpdateDeliveryDate = null;
     private PreparedStatement delivSumOrderAmount = null;
     private PreparedStatement migration1 = null;
-    private PreparedStatement migration2 = null;
+    // private PreparedStatement migration2 = null;
+    private PreparedStatement delivUpdateCustBalDelivCnt = null;
+    private Statement stmt = null;
 
     public ResultSet run(Connection conn, Random gen,
 			int w_id, int numWarehouses,
 			int terminalDistrictLowerID, int terminalDistrictUpperID,
 			TPCCWorker w) throws SQLException {
+
+        if (DBWorkload.IS_CONFLICT) {
+            migrationSQL2 =
+                "migrate insert into customer_proj(" +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data) " +
+                "(select " +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data " +
+                "from customer) " +
+                "on conflict (c_w_id,c_d_id,c_id) do nothing;";            
+        }
 		
         boolean trace = LOG.isDebugEnabled();
         int o_carrier_id = TPCCUtil.randomNumber(1, 10, gen);
@@ -125,7 +147,9 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 		delivUpdateDeliveryDate = this.getPreparedStatement(conn, delivUpdateDeliveryDateSQL);
         delivSumOrderAmount = this.getPreparedStatement(conn, delivSumOrderAmountSQL);
         migration1 = this.getPreparedStatement(conn, migrationSQL1);
-        migration2 = this.getPreparedStatement(conn, migrationSQL2);
+        // migration2 = this.getPreparedStatement(conn, migrationSQL2);
+        delivUpdateCustBalDelivCnt = this.getPreparedStatement(conn, delivUpdateCustBalDelivCntSQL);
+        stmt = conn.createStatement();
 
 		int d_id, c_id;
         float ol_total = 0;
@@ -235,9 +259,26 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             migration1.setInt(1, w_id);
             migration1.setInt(2, d_id);
             migration1.setInt(3, c_id);
+            conn.setAutoCommit(false);
             migration1.executeQuery();
-            migration2.setFloat(1, ol_total);
-            migration2.executeUpdate();
+            stmt.executeUpdate(migrationSQL2);
+            conn.commit();
+
+            int idx = 1; // HACK: So that we can debug this query
+            delivUpdateCustBalDelivCnt.setDouble(idx++, ol_total);
+            delivUpdateCustBalDelivCnt.setInt(idx++, w_id);
+            delivUpdateCustBalDelivCnt.setInt(idx++, d_id);
+            delivUpdateCustBalDelivCnt.setInt(idx++, c_id);
+            if (trace) LOG.trace("delivUpdateCustBalDelivCnt START");
+            result = delivUpdateCustBalDelivCnt.executeUpdate();
+            if (trace) LOG.trace("delivUpdateCustBalDelivCnt END");
+
+            if (result == 0) {
+                String msg = String.format("Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]",
+                                           w_id, d_id, c_id);
+                if (trace) LOG.warn(msg);
+                // throw new RuntimeException(msg);
+            }
         }
 
         conn.commit();
@@ -266,7 +307,8 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             terminalMessage.append("+-----------------------------------------------------------------+\n\n");
             LOG.trace(terminalMessage.toString());
         }
-	
+    
+        if (stmt != null) { stmt.close(); }
 		return null;
     }
 

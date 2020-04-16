@@ -61,7 +61,7 @@ public class PaymentBaseMigrationProj extends TPCCProcedure {
     public SQLStmt payGetCustSQL = new SQLStmt(
             "SELECT C_FIRST, C_LAST, C_STREET_1, " +
             "       C_CITY, C_STATE, C_ZIP, C_CREDIT, " +
-            "       C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT " +
+            "       C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA, C_ID " +
             "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
@@ -101,7 +101,7 @@ public class PaymentBaseMigrationProj extends TPCCProcedure {
     public SQLStmt customerByNameSQL = new SQLStmt(
             "SELECT C_FIRST, C_ID, C_STREET_1, C_CITY, " +
             "       C_STATE, C_ZIP, C_CREDIT, C_DISCOUNT, " +
-            "       C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT " +
+            "       C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
             "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +

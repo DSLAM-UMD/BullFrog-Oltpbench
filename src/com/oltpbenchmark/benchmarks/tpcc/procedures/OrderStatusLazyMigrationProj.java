@@ -18,6 +18,7 @@ package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -60,7 +61,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             "  and c_d_id = ?" +
             "  and c_id = ?;");
 
-    public SQLStmt payGetCustSQL2 = new SQLStmt(
+    public String payGetCustSQL2 =
             "migrate insert into customer_proj(" +
             "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
             "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
@@ -69,8 +70,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
             "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
             "  c_city, c_state, c_zip, c_data " +
-            " from customer) " +
-            "on conflict (c_w_id,c_d_id,c_id) do nothing;");
+            " from customer) ";
 
     public SQLStmt payGetCustSQL3 = new SQLStmt( 
             "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
@@ -88,7 +88,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             "  and c_d_id = ?" +
             "  and c_last = ?;");
             
-    public SQLStmt customerByNameSQL2 = new SQLStmt(
+    public String customerByNameSQL2 =
             "migrate insert into customer_proj(" +
             "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
             "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
@@ -97,8 +97,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
             "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
             "  c_city, c_state, c_zip, c_data " +
-            " from customer) " +
-            "on conflict (c_w_id,c_d_id,c_id) do nothing;");
+            " from customer) ";
         
     public SQLStmt customerByNameSQL3 = new SQLStmt( 
             "SELECT C_ID, C_FIRST, C_LAST, C_STREET_1, " + 
@@ -113,25 +112,53 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
 	private PreparedStatement ordStatGetNewestOrd = null;
 	private PreparedStatement ordStatGetOrderLines = null;
     private PreparedStatement payGetCust1 = null;
-    private PreparedStatement payGetCust2 = null;
+    // private PreparedStatement payGetCust2 = null;
     private PreparedStatement payGetCust3 = null;
     private PreparedStatement customerByName1 = null;
-    private PreparedStatement customerByName2 = null;
+    // private PreparedStatement customerByName2 = null;
     private PreparedStatement customerByName3 = null;
+    private Statement stmt = null;
 
 
     public ResultSet run(Connection conn, Random gen, int w_id, int numWarehouses, int terminalDistrictLowerID, int terminalDistrictUpperID, TPCCWorker w) throws SQLException {
         boolean trace = LOG.isTraceEnabled();
         
+        if (DBWorkload.IS_CONFLICT) {
+            payGetCustSQL2 =
+                "migrate insert into customer_proj(" +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data) " +
+                "(select " +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data " +
+                " from customer) " +
+                "on conflict (c_w_id,c_d_id,c_id) do nothing;";            
+
+            customerByNameSQL2 =
+                "migrate insert into customer_proj(" +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data) " +
+                "(select " +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data " +
+                " from customer) " +
+                "on conflict (c_w_id,c_d_id,c_id) do nothing;";
+        }
+
         // initializing all prepared statements
         ordStatGetNewestOrd = this.getPreparedStatement(conn, ordStatGetNewestOrdSQL);
         ordStatGetOrderLines = this.getPreparedStatement(conn, ordStatGetOrderLinesSQL);
         payGetCust1 = this.getPreparedStatement(conn, payGetCustSQL1);
-        payGetCust2 = this.getPreparedStatement(conn, payGetCustSQL2);
+        // payGetCust2 = this.getPreparedStatement(conn, payGetCustSQL2);
         payGetCust3 = this.getPreparedStatement(conn, payGetCustSQL3);
         customerByName1 = this.getPreparedStatement(conn, customerByNameSQL1);
-        customerByName2 = this.getPreparedStatement(conn, customerByNameSQL2);
+        // customerByName2 = this.getPreparedStatement(conn, customerByNameSQL2);
         customerByName3 = this.getPreparedStatement(conn, customerByNameSQL3);
+        stmt = conn.createStatement();
 
         int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
         boolean c_by_name = false;
@@ -166,9 +193,9 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
     
             conn.setAutoCommit(false);
             customerByName1.executeQuery();
-            customerByName2.executeUpdate();
-            ResultSet rs = customerByName3.executeQuery();
+            stmt.executeUpdate(customerByNameSQL2);
             conn.commit();
+            ResultSet rs = customerByName3.executeQuery();
 
             if (LOG.isTraceEnabled()) LOG.trace("C_LAST=" + c_last + " C_D_ID=" + d_id + " C_W_ID=" + w_id);
     
@@ -199,9 +226,9 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
 
             conn.setAutoCommit(false);
             payGetCust1.executeQuery();
-            payGetCust2.executeUpdate();
-            ResultSet rs = payGetCust3.executeQuery();
+            stmt.executeUpdate(payGetCustSQL2);
             conn.commit();
+            ResultSet rs = payGetCust3.executeQuery();
 
             if (!rs.next()) {
                 throw new RuntimeException("C_ID=" + c_id + " C_D_ID=" + d_id + " C_W_ID=" + w_id + " not found!");
@@ -314,7 +341,8 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             sb.append("+-----------------------------------------------------------------+\n\n");
             LOG.trace(sb.toString());
         }
-        
+
+        if (stmt != null) { stmt.close(); }
         return null;
     }
 }
