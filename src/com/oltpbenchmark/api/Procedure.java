@@ -87,13 +87,14 @@ public abstract class Procedure {
     public void execCommands(String[] commands) {
         try {
             Process p = Runtime.getRuntime().exec(commands);
-            BufferedInputStream is = new BufferedInputStream(p.getInputStream());
+            // BufferedInputStream is = new BufferedInputStream(p.getInputStream());
+            BufferedInputStream is = new BufferedInputStream(p.getErrorStream());
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             String line;
             String result;
-            // while ((line = reader.readLine()) != null) {
-            //    LOG.info(line);
-            // }
+            while ((line = reader.readLine()) != null) {
+               LOG.info(line);
+            }
             try {
                 p.waitFor();
                 is.close();
