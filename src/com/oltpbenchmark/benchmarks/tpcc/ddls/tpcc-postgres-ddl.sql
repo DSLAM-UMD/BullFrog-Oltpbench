@@ -2,6 +2,7 @@
 
 DROP TABLE IF EXISTS order_line CASCADE;
 CREATE TABLE order_line (
+  -- id SERIAL,
   ol_w_id int NOT NULL,
   ol_d_id int NOT NULL,
   ol_o_id int NOT NULL,
@@ -25,6 +26,7 @@ CREATE TABLE new_order (
 
 DROP TABLE IF EXISTS stock CASCADE;
 CREATE TABLE stock (
+  -- id SERIAL,
   s_w_id int NOT NULL,
   s_i_id int NOT NULL,
   s_quantity decimal(4,0) NOT NULL,
@@ -196,13 +198,18 @@ CREATE TABLE orderline_stock (
 
 CREATE INDEX FKEY_STOCK_2 ON STOCK (S_I_ID);
 CREATE INDEX s_order_1 ON stock (s_w_id, s_quantity);
-CREATE INDEX s_order_2 ON stock (s_w_id, s_i_id);
+-- CREATE INDEX s_order_2 ON stock (s_w_id, s_i_id);
 
 CREATE INDEX FKEY_ORDER_LINE_2 ON ORDER_LINE (OL_I_ID);
 CREATE INDEX ol_order_1 ON order_line (ol_o_id, ol_d_id, ol_w_id);
+-- CREATE INDEX ol_order_2 ON order_line (ol_w_id,ol_d_id,ol_o_id,ol_number);
 
 CREATE INDEX os_order_1 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id);
-CREATE INDEX os_order_2 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id, s_w_id, s_quantity); 
+CREATE INDEX os_order_2 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id, ol_number); 
+CREATE INDEX os_order_3 ON orderline_stock (s_i_id);
+CREATE INDEX os_order_4 ON orderline_stock (s_w_id, s_quantity);
+CREATE INDEX os_order_5 ON orderline_stock (s_w_id, s_i_id);
+CREATE INDEX os_order_6 ON orderline_stock (ol_i_id);
 
 CREATE OR REPLACE VIEW orderline_stock_v AS
 (
@@ -214,6 +221,7 @@ CREATE OR REPLACE VIEW orderline_stock_v AS
 -- projection migration
 DROP TABLE IF EXISTS customer_proj CASCADE;
 CREATE TABLE customer_proj (
+  -- id SERIAL,
   c_w_id int NOT NULL,
   c_d_id int NOT NULL,
   c_id int NOT NULL,
@@ -232,6 +240,9 @@ CREATE TABLE customer_proj (
   c_data varchar(500) NOT NULL,
   PRIMARY KEY (c_w_id,c_d_id,c_id)
 );
+
+CREATE INDEX idx_customer_name1 ON customer_proj (c_w_id,c_d_id,c_last,c_first);
+-- CREATE INDEX idx_customer_name2 ON customer_proj (c_w_id,c_d_id,c_id);
 
 CREATE OR REPLACE VIEW customer_proj_v AS
 (
@@ -268,7 +279,8 @@ CREATE OR REPLACE VIEW orderline_agg_v AS
 CREATE OR REPLACE VIEW os_orderline_split_v AS
 (
   SELECT  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d,
-          ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info
+          ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info,
+          s_w_id, s_i_id, s_quantity 
   FROM orderline_stock
 );
 
@@ -276,6 +288,7 @@ CREATE OR REPLACE VIEW os_stock_split_v AS
 (
   SELECT  s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data,
           s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06,
-          s_dist_07, s_dist_08, s_dist_09, s_dist_10
+          s_dist_07, s_dist_08, s_dist_09, s_dist_10,
+          ol_w_id, ol_d_id, ol_o_id
   FROM orderline_stock
 );
