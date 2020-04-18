@@ -71,7 +71,7 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             "   and ol_w_id = ?;");
 
     public SQLStmt migrationSQL2 = new SQLStmt(
-            "migrate insert into orderline_stock(" +
+            " insert  into  orderline_stock(" +
             " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
             " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
@@ -84,7 +84,12 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
-            "  where ol_i_id = s_i_id) ");
+            "  where ol_o_id = ? " +
+            "  and ol_d_id = ? " +
+            "  and ol_w_id = ? " +
+            "  and ol_i_id = s_i_id) " +
+            " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number,s_w_id,s_i_id) " +
+            " DO NOTHING;");
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
 	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
@@ -126,7 +131,7 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
 			int terminalDistrictLowerID, int terminalDistrictUpperID,
 			TPCCWorker w) throws SQLException {
         
-        if (DBWorkload.IS_CONFLICT) {
+        if (!DBWorkload.IS_CONFLICT) {
             migrationSQL2 = new SQLStmt(
                 "migrate insert into orderline_stock(" +
                 " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
@@ -232,10 +237,10 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
                 throw new RuntimeException(msg);
             }
 
-            migration1.setInt(1, no_o_id);
-            migration1.setInt(2, d_id);
-            migration1.setInt(3, w_id);
-            migration1.executeQuery();
+            migration2.setInt(1, no_o_id);
+            migration2.setInt(2, d_id);
+            migration2.setInt(3, w_id);
+            // migration1.executeQuery();
             migration2.executeUpdate();
 
             delivUpdateDeliveryDate.setTimestamp(1, timestamp);
@@ -246,12 +251,12 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             result = delivUpdateDeliveryDate.executeUpdate();
             if (trace) LOG.trace("delivUpdateDeliveryDate END");
 
-            if (result == 0){
-                String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
-                                           w_id, d_id, no_o_id);
-                if (trace) LOG.warn(msg);
-                throw new RuntimeException(msg);
-            }
+            // if (result == 0){
+            //     String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
+            //                                w_id, d_id, no_o_id);
+            //     if (trace) LOG.warn(msg);
+            //     throw new RuntimeException(msg);
+            // }
 
             delivSumOrderAmount.setInt(1, no_o_id);
             delivSumOrderAmount.setInt(2, d_id);

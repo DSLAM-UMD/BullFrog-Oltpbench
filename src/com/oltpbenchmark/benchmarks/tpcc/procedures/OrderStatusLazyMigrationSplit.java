@@ -18,6 +18,7 @@ package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -26,6 +27,7 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 
+import com.oltpbenchmark.DBWorkload;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
@@ -51,15 +53,14 @@ public class OrderStatusLazyMigrationSplit extends TPCCProcedure {
             "  and ol_d_id = ?" +
             "  and ol_w_id = ?");
             
-    public final SQLStmt migrateOrderLineSQL2 = new SQLStmt(
+    public String migrateOrderLineSQL2 =
             "migrate insert into order_line( " +
             "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
             " (select " +
             "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
-            "  from orderline_stock) " +
-            "on conflict (ol_w_id,ol_d_id,ol_o_id,ol_number) do nothing");
+            "  from orderline_stock limit 1) ";
 
 	public SQLStmt ordStatGetOrderLinesSQL = new SQLStmt(
 	        "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D " + 
@@ -92,19 +93,33 @@ public class OrderStatusLazyMigrationSplit extends TPCCProcedure {
 	private PreparedStatement payGetCust = null;
     private PreparedStatement customerByName = null;
     private PreparedStatement migrateOrderLine1 = null;
-    private PreparedStatement migrateOrderLine2 = null;
+    // private PreparedStatement migrateOrderLine2 = null;
+    private Statement stmt = null;
 
 
     public ResultSet run(Connection conn, Random gen, int w_id, int numWarehouses, int terminalDistrictLowerID, int terminalDistrictUpperID, TPCCWorker w) throws SQLException {
         boolean trace = LOG.isTraceEnabled();
         
+        if (DBWorkload.IS_CONFLICT) {
+            migrateOrderLineSQL2 =
+            "migrate insert into order_line( " +
+            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
+            " (select " +
+            "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+            "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
+            "  from orderline_stock limit 1) " +
+            "on conflict (ol_w_id,ol_d_id,ol_o_id,ol_number) do nothing";            
+        }
+
         // initializing all prepared statements
         payGetCust = this.getPreparedStatement(conn, payGetCustSQL);
         customerByName = this.getPreparedStatement(conn, customerByNameSQL);
         ordStatGetNewestOrd = this.getPreparedStatement(conn, ordStatGetNewestOrdSQL);
         ordStatGetOrderLines = this.getPreparedStatement(conn, ordStatGetOrderLinesSQL);
         migrateOrderLine1 = this.getPreparedStatement(conn, migrateOrderLineSQL1); 
-        migrateOrderLine2 = this.getPreparedStatement(conn, migrateOrderLineSQL2);
+        // migrateOrderLine2 = this.getPreparedStatement(conn, migrateOrderLineSQL2);
+        stmt = conn.createStatement();
 
         int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
         boolean c_by_name = false;
@@ -159,8 +174,11 @@ public class OrderStatusLazyMigrationSplit extends TPCCProcedure {
         migrateOrderLine1.setInt(1, o_id);
         migrateOrderLine1.setInt(2, d_id);
         migrateOrderLine1.setInt(3, w_id);
+
+        conn.setAutoCommit(false);
         migrateOrderLine1.executeQuery();
-        migrateOrderLine2.executeUpdate();
+        stmt.executeUpdate(migrateOrderLineSQL2);
+        conn.commit();
 
         // retrieve the order lines for the most recent order
         ordStatGetOrderLines.setInt(1, o_id);
@@ -190,6 +208,7 @@ public class OrderStatusLazyMigrationSplit extends TPCCProcedure {
         }
         rs.close();
         rs = null;
+        if (stmt != null) { stmt.close(); }
 
         // commit the transaction
         conn.commit();

@@ -18,11 +18,14 @@ package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
 
 import org.apache.log4j.Logger;
+
+import com.oltpbenchmark.DBWorkload;
 
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
@@ -78,7 +81,7 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 			"where s_i_id = ?" +
 			"  and s_w_id = ?");
 				
-	public final SQLStmt migrateStackSQL2 = new SQLStmt(
+	public String migrateStackSQL2 =
 			"migrate insert into stock(" +
 			" s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
 			"  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
@@ -87,8 +90,7 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 			"  s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
 			"  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
 			"  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
-			"  from orderline_stock) " +
-			"on conflict (s_i_id,s_w_id) do nothing");
+			"  from orderline_stock limit 1) ";
 
 	public final SQLStmt  stmtGetStockSQL = new SQLStmt(
 	        "SELECT S_QUANTITY, S_DATA, S_DIST_01, S_DIST_02, S_DIST_03, S_DIST_04, S_DIST_05, " +
@@ -111,7 +113,6 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 	        " (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) " +
             " VALUES (?,?,?,?,?,?,?,?,?)");
 
-
 	// NewOrder Txn
 	private PreparedStatement stmtGetCust = null;
 	private PreparedStatement stmtGetWhse = null;
@@ -124,7 +125,8 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 	private PreparedStatement stmtUpdateStock = null;
 	private PreparedStatement stmtInsertOrderLine = null;
 	private PreparedStatement migrateStack1 = null;
-	private PreparedStatement migrateStack2 = null;
+	// private PreparedStatement migrateStack2 = null;
+	private Statement stmt = null;
 
 
     public ResultSet run(Connection conn, Random gen,
@@ -132,7 +134,19 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 			int terminalDistrictLowerID, int terminalDistrictUpperID,
 			TPCCWorker w) throws SQLException {
 
-
+		if (DBWorkload.IS_CONFLICT) {
+			migrateStackSQL2 =
+				"migrate insert into stock(" +
+				" s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
+				"  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
+				"  s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
+				" (select " +
+				"  s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
+				"  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
+				"  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
+				"  from orderline_stock limit 1) " +
+				"on conflict (s_i_id,s_w_id) do nothing";
+		}
 
 		//initializing all prepared statements
 		stmtGetCust=this.getPreparedStatement(conn, stmtGetCustSQL);
@@ -146,9 +160,8 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 		stmtUpdateStock =this.getPreparedStatement(conn, stmtUpdateStockSQL);
 		stmtInsertOrderLine =this.getPreparedStatement(conn, stmtInsertOrderLineSQL);
 		migrateStack1 =this.getPreparedStatement(conn, migrateStackSQL1);
-		migrateStack2 =this.getPreparedStatement(conn, migrateStackSQL2);
-		
-
+		// migrateStack2 =this.getPreparedStatement(conn, migrateStackSQL2);
+		stmt = conn.createStatement();
 
 		int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
 		int customerID = TPCCUtil.getCustomerID(gen);
@@ -310,12 +323,12 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 				itemPrices[ol_number - 1] = i_price;
 				itemNames[ol_number - 1] = i_name;
 
-				// conn.setAutoCommit(false);
 				migrateStack1.setInt(1, ol_i_id);
 				migrateStack1.setInt(2, ol_supply_w_id);
+				conn.setAutoCommit(false);
 				migrateStack1.executeQuery();
-				migrateStack2.executeUpdate();
-				// conn.commit();
+				stmt.executeUpdate(migrateStackSQL2);
+				conn.commit();
 
 				stmtGetStock.setInt(1, ol_i_id);
 				stmtGetStock.setInt(2, ol_supply_w_id);
@@ -429,8 +442,9 @@ public class NewOrderLazyMigrationSplit extends TPCCProcedure {
 	    finally {
             if (stmtInsertOrderLine != null)
                 stmtInsertOrderLine.clearBatch();
-              if (stmtUpdateStock != null)
+            if (stmtUpdateStock != null)
 				stmtUpdateStock.clearBatch();
+			if (stmt != null) { stmt.close(); }
         }
 
 	}

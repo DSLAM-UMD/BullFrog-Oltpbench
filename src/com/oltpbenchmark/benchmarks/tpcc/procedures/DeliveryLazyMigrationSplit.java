@@ -18,12 +18,15 @@ package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Random;
 
 import org.apache.log4j.Logger;
+
+import com.oltpbenchmark.DBWorkload;
 
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
@@ -68,15 +71,14 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
 			"  and ol_d_id = ?" +
 			"  and ol_w_id = ?");
         
-    public final SQLStmt migrateOrderLineSQL2 = new SQLStmt(
+    public String migrateOrderLineSQL2 =
 			"migrate insert into order_line( " +
 			"  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
 			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
 			" (select " +
 			"  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
 			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
-			"  from orderline_stock) " +
-			"on conflict (ol_w_id,ol_d_id,ol_o_id,ol_number) do nothing");
+			"  from orderline_stock limit 1) ";
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
 	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE +
@@ -110,13 +112,26 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
 	private PreparedStatement delivSumOrderAmount = null;
     private PreparedStatement delivUpdateCustBalDelivCnt = null;
     private PreparedStatement migrateOrderLine1 = null;
-    private PreparedStatement migrateOrderLine2 = null;
+    // private PreparedStatement migrateOrderLine2 = null;
+    private Statement stmt = null;
 
 
     public ResultSet run(Connection conn, Random gen,
 			int w_id, int numWarehouses,
 			int terminalDistrictLowerID, int terminalDistrictUpperID,
 			TPCCWorker w) throws SQLException {
+
+        if (DBWorkload.IS_CONFLICT) {
+            migrateOrderLineSQL2 =
+			"migrate insert into order_line( " +
+			"  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
+			" (select " +
+			"  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+			"  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
+			"  from orderline_stock limit 1) " +
+			"on conflict (ol_w_id,ol_d_id,ol_o_id,ol_number) do nothing";            
+        }
 		
         boolean trace = LOG.isDebugEnabled();
         int o_carrier_id = TPCCUtil.randomNumber(1, 10, gen);
@@ -130,15 +145,15 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
 		delivSumOrderAmount = this.getPreparedStatement(conn, delivSumOrderAmountSQL);
         delivUpdateCustBalDelivCnt = this.getPreparedStatement(conn, delivUpdateCustBalDelivCntSQL);
         migrateOrderLine1 = this.getPreparedStatement(conn, migrateOrderLineSQL1); 
-        migrateOrderLine2 = this.getPreparedStatement(conn, migrateOrderLineSQL2); 
+        // migrateOrderLine2 = this.getPreparedStatement(conn, migrateOrderLineSQL2); 
+        stmt = conn.createStatement();
 
 		int d_id, c_id;
         float ol_total = 0;
         int[] orderIDs;
 
         orderIDs = new int[10];
-        // for (d_id = 1; d_id <= 1; d_id++) {
-            d_id = 1;
+        for (d_id = 1; d_id <= 1; d_id++) {
             delivGetOrderId.setInt(1, d_id);
             delivGetOrderId.setInt(2, w_id);
             if (trace) LOG.trace("delivGetOrderId START");
@@ -148,8 +163,7 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
                 // This district has no new orders
                 // This can happen but should be rare
                 if (trace) LOG.warn(String.format("District has no new orders [W_ID=%d, D_ID=%d]", w_id, d_id));
-                // continue;
-                LOG.info(String.format("District has no new orders [W_ID=%d, D_ID=%d]", w_id, d_id));
+                continue;
             }
 
             int no_o_id = rs.getInt("NO_O_ID");
@@ -209,16 +223,18 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
             migrateOrderLine1.setInt(1, no_o_id);
             migrateOrderLine1.setInt(2, d_id);
             migrateOrderLine1.setInt(3, w_id);
+            conn.setAutoCommit(false);
             migrateOrderLine1.executeQuery();
-            migrateOrderLine2.executeUpdate();
+            stmt.executeUpdate(migrateOrderLineSQL2);
+            conn.commit();
 
-            // delivUpdateDeliveryDate.setTimestamp(1, timestamp);
-            // delivUpdateDeliveryDate.setInt(2, no_o_id);
-            // delivUpdateDeliveryDate.setInt(3, d_id);
-            // delivUpdateDeliveryDate.setInt(4, w_id);
-            // if (trace) LOG.trace("delivUpdateDeliveryDate START");
-            // result = delivUpdateDeliveryDate.executeUpdate();
-            // if (trace) LOG.trace("delivUpdateDeliveryDate END");
+            delivUpdateDeliveryDate.setTimestamp(1, timestamp);
+            delivUpdateDeliveryDate.setInt(2, no_o_id);
+            delivUpdateDeliveryDate.setInt(3, d_id);
+            delivUpdateDeliveryDate.setInt(4, w_id);
+            if (trace) LOG.trace("delivUpdateDeliveryDate START");
+            result = delivUpdateDeliveryDate.executeUpdate();
+            if (trace) LOG.trace("delivUpdateDeliveryDate END");
 
             // if (result == 0){
             //    String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
@@ -228,66 +244,68 @@ public class DeliveryLazyMigrationSplit extends TPCCProcedure {
             // }
 
 
-            // delivSumOrderAmount.setInt(1, no_o_id);
-            // delivSumOrderAmount.setInt(2, d_id);
-            // delivSumOrderAmount.setInt(3, w_id);
-            // if (trace) LOG.trace("delivSumOrderAmount START");
-            // rs = delivSumOrderAmount.executeQuery();
-            // if (trace) LOG.trace("delivSumOrderAmount END");
+            delivSumOrderAmount.setInt(1, no_o_id);
+            delivSumOrderAmount.setInt(2, d_id);
+            delivSumOrderAmount.setInt(3, w_id);
+            if (trace) LOG.trace("delivSumOrderAmount START");
+            rs = delivSumOrderAmount.executeQuery();
+            if (trace) LOG.trace("delivSumOrderAmount END");
 
-            // if (!rs.next()) {
-            //     String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
-            //                                w_id, d_id, no_o_id);
-            //     if (trace) LOG.warn(msg);
-            //     throw new RuntimeException(msg);
-            // }
-            // ol_total = rs.getFloat("OL_TOTAL");
-            // rs.close();
+            if (!rs.next()) {
+                String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
+                                           w_id, d_id, no_o_id);
+                if (trace) LOG.warn(msg);
+                throw new RuntimeException(msg);
+            }
+            ol_total = rs.getFloat("OL_TOTAL");
+            rs.close();
 
-            // int idx = 1; // HACK: So that we can debug this query
-            // delivUpdateCustBalDelivCnt.setDouble(idx++, ol_total);
-            // delivUpdateCustBalDelivCnt.setInt(idx++, w_id);
-            // delivUpdateCustBalDelivCnt.setInt(idx++, d_id);
-            // delivUpdateCustBalDelivCnt.setInt(idx++, c_id);
-            // if (trace) LOG.trace("delivUpdateCustBalDelivCnt START");
-            // result = delivUpdateCustBalDelivCnt.executeUpdate();
-            // if (trace) LOG.trace("delivUpdateCustBalDelivCnt END");
+            int idx = 1; // HACK: So that we can debug this query
+            delivUpdateCustBalDelivCnt.setDouble(idx++, ol_total);
+            delivUpdateCustBalDelivCnt.setInt(idx++, w_id);
+            delivUpdateCustBalDelivCnt.setInt(idx++, d_id);
+            delivUpdateCustBalDelivCnt.setInt(idx++, c_id);
+            if (trace) LOG.trace("delivUpdateCustBalDelivCnt START");
+            result = delivUpdateCustBalDelivCnt.executeUpdate();
+            if (trace) LOG.trace("delivUpdateCustBalDelivCnt END");
 
-            // if (result == 0) {
-            //     String msg = String.format("Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]",
-            //                                w_id, d_id, c_id);
-            //     if (trace) LOG.warn(msg);
-            //     throw new RuntimeException(msg);
-            // }
-        // }
+            if (result == 0) {
+                String msg = String.format("Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]",
+                                           w_id, d_id, c_id);
+                if (trace) LOG.warn(msg);
+                throw new RuntimeException(msg);
+            }
+        }
 
         conn.commit();
          
-        // if (trace) {
-        //     StringBuilder terminalMessage = new StringBuilder();
-        //     terminalMessage
-        //             .append("\n+---------------------------- DELIVERY ---------------------------+\n");
-        //     terminalMessage.append(" Date: ");
-        //     terminalMessage.append(TPCCUtil.getCurrentTime());
-        //     terminalMessage.append("\n\n Warehouse: ");
-        //     terminalMessage.append(w_id);
-        //     terminalMessage.append("\n Carrier:   ");
-        //     terminalMessage.append(o_carrier_id);
-        //     terminalMessage.append("\n\n Delivered Orders\n");
-        //     for (int i = 1; i <= TPCCConfig.configDistPerWhse; i++) {
-        //         if (orderIDs[i - 1] >= 0) {
-        //             terminalMessage.append("  District ");
-        //             terminalMessage.append(i < 10 ? " " : "");
-        //             terminalMessage.append(i);
-        //             terminalMessage.append(": Order number ");
-        //             terminalMessage.append(orderIDs[i - 1]);
-        //             terminalMessage.append(" was delivered.\n");
-        //         }
-        //     } // FOR
-        //     terminalMessage.append("+-----------------------------------------------------------------+\n\n");
-        //     LOG.trace(terminalMessage.toString());
-        // }
-	
+        if (trace) {
+            StringBuilder terminalMessage = new StringBuilder();
+            terminalMessage
+                    .append("\n+---------------------------- DELIVERY ---------------------------+\n");
+            terminalMessage.append(" Date: ");
+            terminalMessage.append(TPCCUtil.getCurrentTime());
+            terminalMessage.append("\n\n Warehouse: ");
+            terminalMessage.append(w_id);
+            terminalMessage.append("\n Carrier:   ");
+            terminalMessage.append(o_carrier_id);
+            terminalMessage.append("\n\n Delivered Orders\n");
+            for (int i = 1; i <= TPCCConfig.configDistPerWhse; i++) {
+                if (orderIDs[i - 1] >= 0) {
+                    terminalMessage.append("  District ");
+                    terminalMessage.append(i < 10 ? " " : "");
+                    terminalMessage.append(i);
+                    terminalMessage.append(": Order number ");
+                    terminalMessage.append(orderIDs[i - 1]);
+                    terminalMessage.append(" was delivered.\n");
+                }
+            } // FOR
+            terminalMessage.append("+-----------------------------------------------------------------+\n\n");
+            LOG.trace(terminalMessage.toString());
+        }
+
+        if (stmt != null) { stmt.close(); }
+
 		return null;
     }
 
