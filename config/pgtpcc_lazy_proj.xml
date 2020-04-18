@@ -2,14 +2,14 @@
 <parameters>
     <dbtype>postgres</dbtype>
     <driver>org.postgresql.Driver</driver>
-    <DBUrl>jdbc:postgresql://localhost:5433/tpcc</DBUrl>
+    <DBUrl>jdbc:postgresql://localhost:5436/tpcc</DBUrl>
     <DBName>tpcc</DBName>
     <username>postgres</username>
     <password>postgres</password>
     <isolation>TRANSACTION_SERIALIZABLE</isolation>
-    <terminals>5</terminals>
+    <terminals>8</terminals>
 
-    <scalefactor>1</scalefactor>
+    <scalefactor>50</scalefactor>
     <uploadCode></uploadCode>
     <uploadUrl></uploadUrl>
 
@@ -39,8 +39,8 @@
 
     <works>
         <work>
-          <time>760</time>
-          <rate>300</rate>
+          <time>250</time>
+          <rate>1000</rate>
           <weights>45, 43, 4, 4, 4</weights>
         </work>
         </works>

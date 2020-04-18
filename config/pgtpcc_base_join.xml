@@ -2,12 +2,12 @@
 <parameters>
     <dbtype>postgres</dbtype>
     <driver>org.postgresql.Driver</driver>
-    <DBUrl>jdbc:postgresql://localhost:5435/tpcc</DBUrl>
+    <DBUrl>jdbc:postgresql://localhost:5436/tpcc</DBUrl>
     <DBName>tpcc</DBName>
     <username>postgres</username>
     <password>postgres</password>
     <isolation>TRANSACTION_SERIALIZABLE</isolation>
-    <terminals>10</terminals>
+    <terminals>8</terminals>
 
     <scalefactor>10</scalefactor>
     <uploadCode></uploadCode>
@@ -58,19 +58,22 @@
 
         <works>
         <work>
-          <time>60</time>
+          <warm>0</warm>
+          <time>100</time>
           <rate>1000</rate>
           <weights bench="tpcc">45, 43, 4, 4, 4, 0, 0, 0, 0, 0</weights>
         </work>
         <work>
-          <time>700</time>
+          <warm>0</warm>
+          <time>800</time>
           <rate>1000</rate>
-	  <weights bench="tpcc">0, 43, 4, 0, 0, 53, 0, 0, 0, 0</weights>
+	  <weights bench="tpcc">0, 0, 4, 0, 0, 96, 0, 0, 0, 0</weights>
         </work>
         <work>
-          <time>60</time>
+          <warm>0</warm>
+          <time>180</time>
           <rate>1000</rate>
-	  <weights bench="tpcc">0, 43, 0, 0, 0, 0, 45, 4, 4, 4</weights>
+	  <weights bench="tpcc">0, 21, 0, 0, 0, 0, 67, 2, 5, 5</weights>
         </work>
         </works>
 </parameters>
