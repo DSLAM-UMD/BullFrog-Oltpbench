@@ -2,7 +2,7 @@
 <parameters>
     <dbtype>postgres</dbtype>
     <driver>org.postgresql.Driver</driver>
-    <DBUrl>jdbc:postgresql://localhost:5435/tpcc</DBUrl>
+    <DBUrl>jdbc:postgresql://localhost:5433/tpcc</DBUrl>
     <DBName>tpcc</DBName>
     <username>postgres</username>
     <password>postgres</password>
@@ -39,9 +39,9 @@
    
     <works>
         <work>
-          <time>60</time>
-          <rate>300</rate>
-          <weights>45, 43, 4, 4, 4</weights>
+          <time>10</time>
+          <rate>1</rate>
+          <weights>100, 0, 0, 0, 0</weights>
         </work>
         </works>
 

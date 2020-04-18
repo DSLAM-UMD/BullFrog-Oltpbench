@@ -291,6 +291,8 @@ public class NewOrderLazyMigrationAgg extends TPCCProcedure {
 					"echo \"" + migration + "\" | " +
 					DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
 					DBWorkload.DB_PORT_NUMBER + " tpcc"};
+				
+				System.out.println(DBWorkload.DB_BINARY_PATH);
 				execCommands(command);
 
 			for (int ol_number = 1; ol_number <= o_ol_cnt; ol_number++) {
