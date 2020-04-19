@@ -49,7 +49,7 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
 
     public final SQLStmt migrationSQL1 = new SQLStmt(
             "migrate 1 order_line " +
-            " explain select count(*) from orderline_agg_v " +
+            "explain select count(*) from orderline_agg_v " +
             " where ol_o_id = ? " +
             "   and ol_d_id = ? " +
             "   and ol_w_id = ?; ");

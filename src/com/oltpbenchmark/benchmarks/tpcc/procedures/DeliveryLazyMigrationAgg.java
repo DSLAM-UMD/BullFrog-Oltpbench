@@ -66,7 +66,7 @@ public class DeliveryLazyMigrationAgg extends TPCCProcedure {
 
     public final SQLStmt migrationSQL1 = new SQLStmt(
             "migrate 1 order_line " +
-            " explain select count(*) from orderline_agg_v " +
+            "explain select count(*) from orderline_agg_v " +
             " where ol_o_id = ? " +
             "   and ol_d_id = ? " +
             "   and ol_w_id = ?; ");
@@ -231,12 +231,14 @@ public class DeliveryLazyMigrationAgg extends TPCCProcedure {
             if (trace) LOG.trace("delivSumOrderAmount END");
 
             if (!rs.next()) {
-                String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
-                                           w_id, d_id, no_o_id);
-                if (trace) LOG.warn(msg);
-                throw new RuntimeException(msg);
+                // String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
+                //                            w_id, d_id, no_o_id);
+                // if (trace) LOG.warn(msg);
+                // throw new RuntimeException(msg);
+                ol_total = 0;
+            } else {
+                ol_total = rs.getFloat("OL_TOTAL");
             }
-            ol_total = rs.getFloat("OL_TOTAL");
             rs.close();
 
             int idx = 1; // HACK: So that we can debug this query
