@@ -18,6 +18,7 @@ package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -46,34 +47,26 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
             "   AND O_C_ID = ? " +
             " ORDER BY O_ID DESC LIMIT 1");
 
-    // String txnFormat =
-    //         "migrate 1 order_line " +
-    //         " explain select count(*) from orderline_agg_v " +
-    //         " where ol_o_id = {0,number,#} " +
-    //         "   and ol_d_id = {1,number,#} " +
-    //         "   and ol_w_id = {2,number,#}; "
-    //         +
-    //         " migrate insert into orderline_agg(" +
-    //         " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +
-    //         " (select " +
-    //         "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
-    //         "  from order_line " +
-    //         "  group by ol_o_id, ol_d_id, ol_w_id); ";
-	//         // " ON CONFLICT (ol_o_id,ol_d_id,ol_w_id) " +
-    //         // " DO NOTHING;";
-
-    String txnFormat = 
-            "insert into " + TPCCConstants.TABLENAME_ORDERLINE_AGG + "(select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
-            " from order_line where ol_o_id = {0,number,#} and ol_d_id = {1,number,#} and ol_w_id = {2,number,#}" + 
-            " group by ol_o_id, ol_d_id, ol_w_id);";
-
+    public final SQLStmt migrationSQL1 = new SQLStmt(
+            "migrate 1 order_line " +
+            " explain select count(*) from orderline_agg_v " +
+            " where ol_o_id = ? " +
+            "   and ol_d_id = ? " +
+            "   and ol_w_id = ?; ");
     
-
-	public SQLStmt ordStatGetOrderLinesSQL = new SQLStmt(
-	        "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D " + 
-            "  FROM " + TPCCConstants.TABLENAME_ORDERLINE + 
-            " WHERE OL_O_ID = ?" + 
-            "   AND OL_D_ID = ?" + 
+    public String migrationSQL2 =
+            "migrate insert into orderline_agg(" +
+            " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +
+            " (select " +
+            "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+            "  from order_line " +
+            "  group by ol_o_id, ol_d_id, ol_w_id) ";
+    
+    public SQLStmt ordStatGetOrderLinesSQL = new SQLStmt(
+            "SELECT ol_amount_sum, ol_quantity_avg " +
+            "  FROM " + TPCCConstants.TABLENAME_ORDERLINE_AGG +
+            " WHERE OL_O_ID = ?" +
+            "   AND OL_D_ID = ?" +
             "   AND OL_W_ID = ?");
 
 	public SQLStmt payGetCustSQL = new SQLStmt(
@@ -98,17 +91,33 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
 	private PreparedStatement ordStatGetNewestOrd = null;
 	private PreparedStatement ordStatGetOrderLines = null;
 	private PreparedStatement payGetCust = null;
-	private PreparedStatement customerByName = null;
+    private PreparedStatement customerByName = null;
+    private PreparedStatement migration1 = null;
+    private Statement stmt = null;
 
 
     public ResultSet run(Connection conn, Random gen, int w_id, int numWarehouses, int terminalDistrictLowerID, int terminalDistrictUpperID, TPCCWorker w) throws SQLException {
         boolean trace = LOG.isTraceEnabled();
         
+        if (DBWorkload.IS_CONFLICT) {
+            migrationSQL2 =
+            "migrate insert into orderline_agg(" +
+            " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +
+            " (select " +
+            "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+            "  from order_line " +
+            "  group by ol_o_id, ol_d_id, ol_w_id) " +
+            " ON CONFLICT (ol_o_id,ol_d_id,ol_w_id) " +
+            " DO NOTHING;";            
+        }
+
         // initializing all prepared statements
         payGetCust = this.getPreparedStatement(conn, payGetCustSQL);
         customerByName = this.getPreparedStatement(conn, customerByNameSQL);
         ordStatGetNewestOrd = this.getPreparedStatement(conn, ordStatGetNewestOrdSQL);
         ordStatGetOrderLines = this.getPreparedStatement(conn, ordStatGetOrderLinesSQL);
+        migration1 = this.getPreparedStatement(conn, migrationSQL1);
+        stmt = conn.createStatement();
 
         int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
         boolean c_by_name = false;
@@ -160,16 +169,11 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
         o_entry_d = rs.getTimestamp("O_ENTRY_D");
         rs.close();
 
-        // migration txn
-        String migration = MessageFormat.format(txnFormat,
-            o_id, d_id, w_id);
-        // LOG.info(migration);
-        String[] command = {"/bin/sh", "-c",
-            "echo \"" + migration + "\" | " +
-            DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-            DBWorkload.DB_PORT_NUMBER + " tpcc"};
-        execCommands(command);
-
+        migration1.setInt(1, o_id);
+        migration1.setInt(2, d_id);
+        migration1.setInt(3, w_id);
+        migration1.executeQuery();
+        stmt.executeUpdate(migrationSQL2);
 
         // retrieve the order lines for the most recent order
         ordStatGetOrderLines.setInt(1, o_id);
@@ -182,18 +186,9 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
         while (rs.next()) {
             StringBuilder sb = new StringBuilder();
             sb.append("[");
-            sb.append(rs.getLong("OL_SUPPLY_W_ID"));
+            sb.append(rs.getLong("ol_amount_sum"));
             sb.append(" - ");
-            sb.append(rs.getLong("OL_I_ID"));
-            sb.append(" - ");
-            sb.append(rs.getLong("OL_QUANTITY"));
-            sb.append(" - ");
-            sb.append(TPCCUtil.formattedDouble(rs.getDouble("OL_AMOUNT")));
-            sb.append(" - ");
-            if (rs.getTimestamp("OL_DELIVERY_D") != null)
-                sb.append(rs.getTimestamp("OL_DELIVERY_D"));
-            else
-                sb.append("99-99-9999");
+            sb.append(rs.getLong("ol_quantity_avg"));
             sb.append("]");
             orderLines.add(sb.toString());
         }
@@ -202,7 +197,8 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
 
         // commit the transaction
         conn.commit();
-        
+        if (stmt != null) { stmt.close(); }
+
         if (orderLines.isEmpty()) {
             String msg = String.format("Order record had no order line items [C_W_ID=%d, C_D_ID=%d, C_ID=%d, O_ID=%d]",
                                        w_id, d_id, c.c_id, o_id);

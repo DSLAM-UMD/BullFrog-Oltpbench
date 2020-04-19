@@ -39,14 +39,20 @@ public class BaseMigrationAggPhaseOne extends TPCCProcedure {
     private static AtomicLong numRun = new AtomicLong(0);
 
     private static final String migration =
-            "insert into orderline_agg(" +
-            " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
-            " (select " +
-            " sum(ol_w_id), ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-            " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info" +
-            " from order_line " +
-            " group by ol_w_id, ol_d_id, ol_o_id, ol_number); ";
+        "insert into orderline_agg(" +
+        " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +
+        " (select " +
+        "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+        "  from order_line " +
+        "  group by ol_o_id, ol_d_id, ol_w_id); ";
+
+        // insert into orderline_agg(
+        //     ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id)
+        // (select
+        //     sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id
+        // from order_line
+        // group by ol_o_id, ol_d_id, ol_w_id);
+
 
     public ResultSet run(Connection conn, Random gen,
             int w_id, int numWarehouses,

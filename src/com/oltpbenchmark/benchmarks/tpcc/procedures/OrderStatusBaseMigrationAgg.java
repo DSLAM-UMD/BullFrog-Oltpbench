@@ -45,7 +45,7 @@ public class OrderStatusBaseMigrationAgg extends TPCCProcedure {
             " ORDER BY O_ID DESC LIMIT 1");
 
 	public SQLStmt ordStatGetOrderLinesSQL = new SQLStmt(
-	        "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D " +
+	        "SELECT ol_amount_sum, ol_quantity_avg " +
             "  FROM " + TPCCConstants.TABLENAME_ORDERLINE_AGG +
             " WHERE OL_O_ID = ?" +
             "   AND OL_D_ID = ?" +
@@ -142,22 +142,12 @@ public class OrderStatusBaseMigrationAgg extends TPCCProcedure {
         if (trace) LOG.trace("ordStatGetOrderLines START");
         rs = ordStatGetOrderLines.executeQuery();
         if (trace) LOG.trace("ordStatGetOrderLines END");
-
         while (rs.next()) {
             StringBuilder sb = new StringBuilder();
             sb.append("[");
-            sb.append(rs.getLong("OL_SUPPLY_W_ID"));
+            sb.append(rs.getLong("ol_amount_sum"));
             sb.append(" - ");
-            sb.append(rs.getLong("OL_I_ID"));
-            sb.append(" - ");
-            sb.append(rs.getLong("OL_QUANTITY"));
-            sb.append(" - ");
-            sb.append(TPCCUtil.formattedDouble(rs.getDouble("OL_AMOUNT")));
-            sb.append(" - ");
-            if (rs.getTimestamp("OL_DELIVERY_D") != null)
-                sb.append(rs.getTimestamp("OL_DELIVERY_D"));
-            else
-                sb.append("99-99-9999");
+            sb.append(rs.getLong("ol_quantity_avg"));
             sb.append("]");
             orderLines.add(sb.toString());
         }

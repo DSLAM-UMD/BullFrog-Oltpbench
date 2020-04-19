@@ -52,55 +52,6 @@ public class StockLevelLazyMigrationAgg extends TPCCProcedure {
 			" AND S_I_ID = OL_I_ID" + 
 			" AND S_QUANTITY < ?");
 
-    // String txnFormat = 
-    //         "migrate 1 order_line " +
-    //         " explain select count(*) from orderline_agg_v " + 
-    //         " where ol_w_id = {0,number,#} " +
-    //         " and ol_d_id = {1,number,#} " +
-    //         " and ol_o_id < {2,number,#} " +
-    //         " and ol_o_id >= {3,number,#}; "
-    //         +
-    //         "migrate insert into orderline_agg(" +
-    //         " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-    //         " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info) " +
-    //         " (select " +
-    //         "  sum(ol_w_id), ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
-    //         "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info " +
-    //         "  from order_line " +
-    //         "  group by ol_w_id, ol_d_id, ol_o_id, ol_number) " + 
-    //         "  ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number) DO NOTHING; "
-    //         +
-    //         "select count(distinct (s_i_id)) as stock_count " +
-    //         " FROM " + TPCCConstants.TABLENAME_ORDERLINE_AGG + ", " + TPCCConstants.TABLENAME_STOCK +
-    //         " where ol_w_id = {4,number,#} " +
-    //         " and ol_d_id = {5,number,#} " +
-    //         " and ol_o_id < {6,number,#} " +
-    //         " and ol_o_id >= {7,number,#} " +
-    //         " and s_w_id = {8,number,#} " +
-    //         " and s_i_id = ol_i_id " + 
-    //         " and s_quantity < {9,number,#};";
-
-    // String txnFormat =
-    //         "migrate 1 order_line " +
-    //         " explain select count(*) from orderline_agg_v " +
-    //         " where ol_o_id = {0,number,#} " +
-    //         "   and ol_d_id = {1,number,#} " +
-    //         "   and ol_w_id = {2,number,#}; "
-    //         +
-    //         " migrate insert into orderline_agg(" +
-    //         " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +
-    //         " (select " +
-    //         "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
-    //         "  from order_line " +
-    //         "  group by ol_o_id, ol_d_id, ol_w_id); ";
-	//         // " ON CONFLICT (ol_o_id,ol_d_id,ol_w_id) " +
-    //         // " DO NOTHING;";
-
-    String txnFormat = 
-            "insert into " + TPCCConstants.TABLENAME_ORDERLINE_AGG + "(select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
-            " from order_line where ol_o_id = {0,number,#} and ol_d_id = {1,number,#} and ol_w_id = {2,number,#}" + 
-            " group by ol_o_id, ol_d_id, ol_w_id);";
-
 	// Stock Level Txn
 	private PreparedStatement stockGetDistOrderId = null;
 	private PreparedStatement stockGetCountStock = null;
@@ -153,17 +104,8 @@ public class StockLevelLazyMigrationAgg extends TPCCProcedure {
          stock_count = rs.getInt("STOCK_COUNT");
          if (trace) LOG.trace("stockGetCountStock RESULT=" + stock_count);
 
-        String migration = MessageFormat.format(txnFormat,
-            o_id, d_id, w_id);
-        
-        String[] command = {"/bin/sh", "-c",
-            "echo \"" + migration + "\" | " +
-            DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-            DBWorkload.DB_PORT_NUMBER + " tpcc"};
-        execCommands(command);
-
          conn.commit();
-        //  rs.close();
+         rs.close();
 
          if (trace) {
              StringBuilder terminalMessage = new StringBuilder();

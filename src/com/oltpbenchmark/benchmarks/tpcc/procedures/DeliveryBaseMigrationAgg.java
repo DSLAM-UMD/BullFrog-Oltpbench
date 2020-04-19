@@ -62,14 +62,14 @@ public class DeliveryBaseMigrationAgg extends TPCCProcedure {
 			"   AND O_W_ID = ?");
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
-	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE_AGG +
+	        "UPDATE " + TPCCConstants.TABLENAME_ORDERLINE +
 	        "   SET OL_DELIVERY_D = ? " +
 			" WHERE OL_O_ID = ? " +
 			"   AND OL_D_ID = ? " +
 			"   AND OL_W_ID = ? ");
 
 	public SQLStmt delivSumOrderAmountSQL = new SQLStmt(
-	        "SELECT SUM(OL_AMOUNT) AS OL_TOTAL " +
+	        "SELECT ol_amount_sum AS OL_TOTAL " +
 			"  FROM " + TPCCConstants.TABLENAME_ORDERLINE_AGG +
 			" WHERE OL_O_ID = ? " +
 			"   AND OL_D_ID = ? " +

@@ -41,7 +41,7 @@ public class StockLevelBaseMigrationAgg extends TPCCProcedure {
 
 	public SQLStmt stockGetCountStockSQL = new SQLStmt(
 	        "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT " +
-			" FROM " + TPCCConstants.TABLENAME_ORDERLINE_AGG + ", " + TPCCConstants.TABLENAME_STOCK +
+			" FROM " + TPCCConstants.TABLENAME_ORDERLINE + ", " + TPCCConstants.TABLENAME_STOCK +
 			" WHERE OL_W_ID = ?" +
 			" AND OL_D_ID = ?" +
 			" AND OL_O_ID < ?" +

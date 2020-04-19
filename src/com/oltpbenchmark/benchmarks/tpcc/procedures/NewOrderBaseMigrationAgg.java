@@ -90,8 +90,10 @@ public class NewOrderBaseMigrationAgg extends TPCCProcedure {
 
 	public final SQLStmt  stmtInsertOrderLineSQL = new SQLStmt(
 	        "INSERT INTO " + TPCCConstants.TABLENAME_ORDERLINE_AGG +
-	        " (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) " +
-            " VALUES (?,?,?,?,?,?,?,?,?)");
+	        " (OL_O_ID, OL_D_ID, OL_W_ID, ol_amount_sum, ol_quantity_avg) " +
+			" VALUES (?,?,?,?,?) ON CONFLICT (OL_O_ID, OL_D_ID, OL_W_ID) " +
+			" DO UPDATE SET ol_amount_sum=orderline_agg.ol_amount_sum+?, " +
+			" ol_quantity_avg=(orderline_agg.ol_quantity_avg+?)/2::numeric");
 
 
 	// NewOrder Txn
@@ -378,12 +380,10 @@ public class NewOrderBaseMigrationAgg extends TPCCProcedure {
 				stmtInsertOrderLine.setInt(1, o_id);
 				stmtInsertOrderLine.setInt(2, d_id);
 				stmtInsertOrderLine.setInt(3, w_id);
-				stmtInsertOrderLine.setInt(4, ol_number);
-				stmtInsertOrderLine.setInt(5, ol_i_id);
-				stmtInsertOrderLine.setInt(6, ol_supply_w_id);
-				stmtInsertOrderLine.setInt(7, ol_quantity);
-				stmtInsertOrderLine.setDouble(8, ol_amount);
-				stmtInsertOrderLine.setString(9, ol_dist_info);
+				stmtInsertOrderLine.setDouble(4, ol_amount);
+				stmtInsertOrderLine.setDouble(5, ol_quantity);
+				stmtInsertOrderLine.setDouble(6, ol_amount);
+				stmtInsertOrderLine.setDouble(7, ol_quantity);
 				stmtInsertOrderLine.addBatch();
 
 			} // end-for
