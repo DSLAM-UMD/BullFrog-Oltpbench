@@ -61,6 +61,13 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
             "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
             "  from order_line " +
             "  group by ol_o_id, ol_d_id, ol_w_id) ";
+
+    public String migrationSQL3 = 
+            "  insert into orderline_agg(" +
+            " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +    
+            " (select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+            " from order_line where ol_o_id = {0,number,#} and ol_d_id = {1,number,#} and ol_w_id = {2,number,#}" + 
+            " group by ol_o_id, ol_d_id, ol_w_id);";
     
     public SQLStmt ordStatGetOrderLinesSQL = new SQLStmt(
             "SELECT ol_amount_sum, ol_quantity_avg " +
@@ -169,11 +176,19 @@ public class OrderStatusLazyMigrationAgg extends TPCCProcedure {
         o_entry_d = rs.getTimestamp("O_ENTRY_D");
         rs.close();
 
-        migration1.setInt(1, o_id);
-        migration1.setInt(2, d_id);
-        migration1.setInt(3, w_id);
-        migration1.executeQuery();
-        stmt.executeUpdate(migrationSQL2);
+        // migration1.setInt(1, o_id);
+        // migration1.setInt(2, d_id);
+        // migration1.setInt(3, w_id);
+        // conn.setAutoCommit(false);
+        // migration1.executeQuery();
+        // stmt.executeUpdate(migrationSQL2);
+        // conn.commit();
+
+        conn.setAutoCommit(false);
+        String migration = MessageFormat.format(migrationSQL3,
+            o_id, d_id, w_id);
+        stmt.executeUpdate(migration);
+        conn.commit();
 
         // retrieve the order lines for the most recent order
         ordStatGetOrderLines.setInt(1, o_id);

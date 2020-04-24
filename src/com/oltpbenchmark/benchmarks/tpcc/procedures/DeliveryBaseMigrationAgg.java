@@ -207,12 +207,14 @@ public class DeliveryBaseMigrationAgg extends TPCCProcedure {
             if (trace) LOG.trace("delivSumOrderAmount END");
 
             if (!rs.next()) {
-                String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
-                                           w_id, d_id, no_o_id);
-                if (trace) LOG.warn(msg);
-                throw new RuntimeException(msg);
+                // String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
+                //                            w_id, d_id, no_o_id);
+                // if (trace) LOG.warn(msg);
+                // throw new RuntimeException(msg);
+                ol_total = 0;
+            } else {
+                ol_total = rs.getFloat("OL_TOTAL");
             }
-            ol_total = rs.getFloat("OL_TOTAL");
             rs.close();
 
             int idx = 1; // HACK: So that we can debug this query
