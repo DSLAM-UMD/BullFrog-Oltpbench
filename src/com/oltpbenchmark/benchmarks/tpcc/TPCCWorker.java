@@ -49,6 +49,10 @@ public class TPCCWorker extends Worker<TPCCBenchmark> {
 
 	private int numWarehouses;
 
+    public ThreadLocal<Number> t_c_w_id = new ThreadLocal<Number>();
+    public ThreadLocal<Number> t_c_d_id = new ThreadLocal<Number>();
+    public ThreadLocal<Number> t_c_id = new ThreadLocal<Number>();
+
 	public TPCCWorker(TPCCBenchmark benchmarkModule, int id,
 			int terminalWarehouseID, int terminalDistrictLowerID,
 			int terminalDistrictUpperID, int numWarehouses)

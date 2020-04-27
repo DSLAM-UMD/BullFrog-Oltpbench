@@ -33,7 +33,7 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 
-public class NewOrderLazyMigrationProj extends TPCCProcedureLazyMigrationProj {
+public class NewOrderLazyMigrationProj extends TPCCProcedure {
 
     private static final Logger LOG = Logger.getLogger(NewOrderLazyMigrationProj.class);
 
@@ -199,32 +199,32 @@ public class NewOrderLazyMigrationProj extends TPCCProcedureLazyMigrationProj {
 
 		int probability = TPCCUtil.randomNumber(1, 100, gen); 
 		if (probability <= 20) {
-			if(t_c_w_id.get() == null) {
-				t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
-				t_c_d_id.set(1);
-				t_c_id.set(1);
+			if(w.t_c_w_id.get() == null) {
+				w.t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
+				w.t_c_d_id.set(1);
+				w.t_c_id.set(1);
 			} else {
 				// I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
 				// It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
 				// which will be counted into the throughput. As long as the migration is performed in order, it
 				// will be completed sooner or later.
-				if (t_c_id.get().intValue() == 3000) {
-					if (t_c_d_id.get().intValue() == 10) {
-						t_c_w_id.set(t_c_w_id.get().intValue() + 1); // auto increment
-						t_c_d_id.set(1);
-						t_c_id.set(1);                    
+				if (w.t_c_id.get().intValue() == 3000) {
+					if (w.t_c_d_id.get().intValue() == 10) {
+						w.t_c_w_id.set(w.t_c_w_id.get().intValue() + 1); // auto increment
+						w.t_c_d_id.set(1);
+						w.t_c_id.set(1);                    
 					} else {
-						t_c_d_id.set(t_c_d_id.get().intValue() + 1); // auto increment
-						t_c_id.set(1);
+						w.t_c_d_id.set(w.t_c_d_id.get().intValue() + 1); // auto increment
+						w.t_c_id.set(1);
 					}
 				} else {
-					t_c_id.set(t_c_id.get().intValue() + 1); // auto increment 
+					w.t_c_id.set(w.t_c_id.get().intValue() + 1); // auto increment 
 				}
 			}
 			// assign a determinstic predicate
-			terminalWarehouseID = t_c_w_id.get().intValue(); 
-			districtID = t_c_d_id.get().intValue(); 
-			customerID = t_c_id.get().intValue(); 
+			terminalWarehouseID = w.t_c_w_id.get().intValue(); 
+			districtID = w.t_c_d_id.get().intValue(); 
+			customerID = w.t_c_id.get().intValue(); 
 			LOG.info("worker_" + w.getId() + " (" + terminalWarehouseID + "," + districtID + "," + customerID + ")");
 		}
 
