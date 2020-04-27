@@ -39,6 +39,15 @@ import java.io.BufferedOutputStream;
 
 import org.apache.log4j.Logger;
 
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.ExpressionVisitor;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+
 import com.oltpbenchmark.jdbc.AutoIncrementPreparedStatement;
 import com.oltpbenchmark.types.DatabaseType;
 
@@ -82,6 +91,40 @@ public abstract class Procedure {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public String getCondExpression(String statement) {
+        String result = null;
+        try {
+            Select select = (Select) CCJSqlParserUtil.parse(statement);
+            result = ((PlainSelect) select.getSelectBody()).getWhere().toString();
+            // LOG.info(result);
+        } catch (JSQLParserException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public String setCondExpression(String statement, String cond) {
+        String result = null;
+        try {
+            Insert insert = (Insert) CCJSqlParserUtil.parse(statement);
+            Select select = insert.getSelect();
+            Expression where = CCJSqlParserUtil.parseCondExpression(cond);
+            Expression originalWhereExpr = ((PlainSelect) select.getSelectBody()).getWhere();
+            if (originalWhereExpr != null) {
+                AndExpression andRowNum = new AndExpression(originalWhereExpr, where);
+                ((PlainSelect) select.getSelectBody()).setWhere(andRowNum);
+            } else {
+                ((PlainSelect) select.getSelectBody()).setWhere(where);
+            }
+
+            result = insert.toString();
+            // LOG.info(result);
+        } catch (JSQLParserException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     public void execCommands(String[] commands) {
