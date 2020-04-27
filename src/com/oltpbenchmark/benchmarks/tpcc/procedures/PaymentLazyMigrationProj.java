@@ -36,7 +36,7 @@ import com.oltpbenchmark.benchmarks.linkbench.LinkBenchConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 import com.oltpbenchmark.benchmarks.tpcc.pojo.Customer;
 
-public class PaymentLazyMigrationProj extends TPCCProcedure {
+public class PaymentLazyMigrationProj extends TPCCProcedureLazyMigrationProj {
 
     private static final Logger LOG = Logger.getLogger(PaymentLazyMigrationProj.class);
 
@@ -291,6 +291,39 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             // 40% lookups by customer ID
             customerByName = false;
             customerID = TPCCUtil.getCustomerID(gen);
+        }
+
+        if (!customerByName) {
+            int probability = TPCCUtil.randomNumber(1, 100, gen); 
+            if (probability <= 80) {
+                if(t_c_w_id.get() == null) {
+                    t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
+                    t_c_d_id.set(1);
+                    t_c_id.set(1);
+                } else {
+                    // I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
+                    // It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
+                    // which will be counted into the throughput. As long as the migration is performed in order, it
+                    // will be completed sooner or later.
+                    if (t_c_id.get().intValue() == 3000) {
+                        if (t_c_d_id.get().intValue() == 10) {
+                            t_c_w_id.set(t_c_w_id.get().intValue() + 1); // auto increment
+                            t_c_d_id.set(1);
+                            t_c_id.set(1);                    
+                        } else {
+                            t_c_d_id.set(t_c_d_id.get().intValue() + 1); // auto increment
+                            t_c_id.set(1);
+                        }
+                    } else {
+                        t_c_id.set(t_c_id.get().intValue() + 1); // auto increment 
+                    }
+                }
+                // assign a determinstic predicate
+                customerWarehouseID = t_c_w_id.get().intValue(); 
+                customerDistrictID = t_c_d_id.get().intValue(); 
+                customerID = t_c_id.get().intValue(); 
+                LOG.info("worker_" + w.getId() + " (" + customerWarehouseID + "," + customerDistrictID + "," + customerID + ")");
+            }
         }
 
         float paymentAmount = (float) (TPCCUtil.randomNumber(100, 500000, gen) / 100.0);

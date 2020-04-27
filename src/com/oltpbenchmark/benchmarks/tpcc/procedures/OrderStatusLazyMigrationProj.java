@@ -35,7 +35,7 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.pojo.Customer;
 
-public class OrderStatusLazyMigrationProj extends TPCCProcedure {
+public class OrderStatusLazyMigrationProj extends TPCCProcedureLazyMigrationProj {
 
     private static final Logger LOG = Logger.getLogger(OrderStatusLazyMigrationProj.class);
 
@@ -252,6 +252,39 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
         } else {
             c_by_name = false;
             c_id = TPCCUtil.getCustomerID(gen);
+        }
+
+        if (!c_by_name) {
+            int probability = TPCCUtil.randomNumber(1, 100, gen); 
+            if (probability <= 80) {
+                if(t_c_w_id.get() == null) {
+                    t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
+                    t_c_d_id.set(1);
+                    t_c_id.set(1);
+                } else {
+                    // I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
+                    // It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
+                    // which will be counted into the throughput. As long as the migration is performed in order, it
+                    // will be completed sooner or later.
+                    if (t_c_id.get().intValue() == 3000) {
+                        if (t_c_d_id.get().intValue() == 10) {
+                            t_c_w_id.set(t_c_w_id.get().intValue() + 1); // auto increment
+                            t_c_d_id.set(1);
+                            t_c_id.set(1);                    
+                        } else {
+                            t_c_d_id.set(t_c_d_id.get().intValue() + 1); // auto increment
+                            t_c_id.set(1);
+                        }
+                    } else {
+                        t_c_id.set(t_c_id.get().intValue() + 1); // auto increment 
+                    }
+                }
+                // assign a determinstic predicate
+                w_id = t_c_w_id.get().intValue(); 
+                d_id = t_c_d_id.get().intValue(); 
+                c_id = t_c_id.get().intValue(); 
+                LOG.info("worker_" + w.getId() + " (" + w_id + "," + d_id + "," + c_id + ")");
+            }
         }
 
         int o_id = -1, o_carrier_id = -1;

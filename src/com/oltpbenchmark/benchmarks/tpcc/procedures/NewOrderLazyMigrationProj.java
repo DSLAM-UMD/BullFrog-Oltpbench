@@ -33,7 +33,7 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 
-public class NewOrderLazyMigrationProj extends TPCCProcedure {
+public class NewOrderLazyMigrationProj extends TPCCProcedureLazyMigrationProj {
 
     private static final Logger LOG = Logger.getLogger(NewOrderLazyMigrationProj.class);
 
@@ -196,6 +196,37 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 
 		int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
 		int customerID = TPCCUtil.getCustomerID(gen);
+
+		int probability = TPCCUtil.randomNumber(1, 100, gen); 
+		if (probability <= 20) {
+			if(t_c_w_id.get() == null) {
+				t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
+				t_c_d_id.set(1);
+				t_c_id.set(1);
+			} else {
+				// I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
+				// It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
+				// which will be counted into the throughput. As long as the migration is performed in order, it
+				// will be completed sooner or later.
+				if (t_c_id.get().intValue() == 3000) {
+					if (t_c_d_id.get().intValue() == 10) {
+						t_c_w_id.set(t_c_w_id.get().intValue() + 1); // auto increment
+						t_c_d_id.set(1);
+						t_c_id.set(1);                    
+					} else {
+						t_c_d_id.set(t_c_d_id.get().intValue() + 1); // auto increment
+						t_c_id.set(1);
+					}
+				} else {
+					t_c_id.set(t_c_id.get().intValue() + 1); // auto increment 
+				}
+			}
+			// assign a determinstic predicate
+			terminalWarehouseID = t_c_w_id.get().intValue(); 
+			districtID = t_c_d_id.get().intValue(); 
+			customerID = t_c_id.get().intValue(); 
+			LOG.info("worker_" + w.getId() + " (" + terminalWarehouseID + "," + districtID + "," + customerID + ")");
+		}
 
 		int numItems = (int) TPCCUtil.randomNumber(5, 15, gen);
 		int[] itemIDs = new int[numItems];
