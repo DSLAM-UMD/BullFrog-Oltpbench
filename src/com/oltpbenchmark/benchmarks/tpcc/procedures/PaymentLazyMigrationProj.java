@@ -80,6 +80,20 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             "  c_city, c_state, c_zip, c_data " +
             " from customer) ";
 
+    public String payGetCustSQL = 
+            " insert into customer_proj(" +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data) " +
+            "(select " +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data " +
+            "from customer " +
+            "where c_w_id = {0,number,#} " +
+            "  and c_d_id = {1,number,#} " +
+            "  and c_id = {2,number,#});";
+
     public SQLStmt payGetCustSQL3 = new SQLStmt( 
             "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
             "       C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
@@ -131,6 +145,20 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             "  c_city, c_state, c_zip, c_data " +
             " from customer) ";
     
+    public String customerByNameSQL = 
+            " insert into customer_proj(" +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data) " +
+            "(select " +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data " +
+            "from customer " +
+            "where c_w_id = {0,number,#} " +
+            "  and c_d_id = {1,number,#} " +
+            "  and c_last = ''{2}'');";
+
     public SQLStmt customerByNameSQL3 = new SQLStmt( 
             "SELECT C_FIRST, C_LAST, C_STREET_1, " + 
             "       C_CITY, C_STATE, C_ZIP, C_CREDIT, " + 
@@ -185,6 +213,36 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
                 "  c_city, c_state, c_zip, c_data " +
                 " from customer) " +
                 "on conflict (c_w_id,c_d_id,c_id) do nothing;";            
+
+            customerByNameSQL = 
+                " insert into customer_proj(" +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data) " +
+                "(select " +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data " +
+                "from customer " +
+                "where c_w_id = {0,number,#} " +
+                "  and c_d_id = {1,number,#} " +
+                "  and c_last = ''{2}'') " +
+                "on conflict (c_w_id,c_d_id,c_id) do nothing;";
+
+            payGetCustSQL = 
+                " insert into customer_proj(" +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data) " +
+                "(select " +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data " +
+                "from customer " +
+                "where c_w_id = {0,number,#} " +
+                "  and c_d_id = {1,number,#} " +
+                "  and c_id = {2,number,#}) " +
+                "on conflict (c_w_id,c_d_id,c_id) do nothing;";
         }
 
         // initializing all prepared statements
@@ -287,18 +345,24 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             assert customerID <= 0;
             ArrayList<Customer> customers = new ArrayList<Customer>();
 
-            customerByName1.setInt(1, customerWarehouseID);
-            customerByName1.setInt(2, customerDistrictID);
-            customerByName1.setString(3, customerLastName);
+            // customerByName1.setInt(1, customerWarehouseID);
+            // customerByName1.setInt(2, customerDistrictID);
+            // customerByName1.setString(3, customerLastName);
             customerByName3.setInt(1, customerWarehouseID);
             customerByName3.setInt(2, customerDistrictID);
             customerByName3.setString(3, customerLastName);
     
-            conn.setAutoCommit(false);
-            customerByName1.executeQuery();
-            stmt.executeUpdate(customerByNameSQL2);
-            conn.commit();
+            // conn.setAutoCommit(false);
+            // customerByName1.executeQuery();
+            // stmt.executeUpdate(customerByNameSQL2);
+            // conn.commit();
 
+            conn.setAutoCommit(false);
+            String migration = MessageFormat.format(customerByNameSQL,
+                customerWarehouseID, customerDistrictID, customerLastName);
+            stmt.executeUpdate(migration);
+            conn.commit();
+            
             rs = customerByName3.executeQuery();
 
             if (LOG.isTraceEnabled()) LOG.trace("C_LAST=" + customerLastName + " C_D_ID=" + customerDistrictID + " C_W_ID=" + customerWarehouseID);
@@ -321,16 +385,23 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             c = customers.get(index);
         } else {
             assert customerLastName == null;
-            payGetCust1.setInt(1, customerWarehouseID);
-            payGetCust1.setInt(2, customerDistrictID);
-            payGetCust1.setInt(3, customerID);
+            // payGetCust1.setInt(1, customerWarehouseID);
+            // payGetCust1.setInt(2, customerDistrictID);
+            // payGetCust1.setInt(3, customerID);
             payGetCust3.setInt(1, customerWarehouseID);
             payGetCust3.setInt(2, customerDistrictID);
             payGetCust3.setInt(3, customerID);
+            // conn.setAutoCommit(false);
+            // payGetCust1.executeQuery();
+            // stmt.executeUpdate(payGetCustSQL2);
+            // conn.commit();
+
             conn.setAutoCommit(false);
-            payGetCust1.executeQuery();
-            stmt.executeUpdate(payGetCustSQL2);
-            conn.commit();
+            String migration = MessageFormat.format(payGetCustSQL,
+                customerWarehouseID, customerDistrictID, customerID);
+            stmt.executeUpdate(migration);
+            conn.commit();            
+
             rs = payGetCust3.executeQuery();
 
             if (!rs.next()) {

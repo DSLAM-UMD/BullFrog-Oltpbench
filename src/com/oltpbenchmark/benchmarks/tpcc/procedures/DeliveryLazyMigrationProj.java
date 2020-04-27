@@ -104,6 +104,19 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             "  c_city, c_state, c_zip, c_data " +
             "from customer);";
 
+    public String migrationSQL3 = 
+            " insert into customer_proj(" +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data) " +
+            "(select " +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+            "  c_city, c_state, c_zip, c_data " +
+            "from customer " +
+            "where c_w_id = {0,number,#} " +
+            "  and c_d_id = {1,number,#} " +
+            "  and c_id = {2,number,#});";
 
 	// Delivery Txn
 	private PreparedStatement delivGetOrderId = null;
@@ -134,6 +147,20 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
                 "  c_city, c_state, c_zip, c_data " +
                 "from customer) " +
                 "on conflict (c_w_id,c_d_id,c_id) do nothing;";            
+            migrationSQL3 = 
+                " insert into customer_proj(" +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data) " +
+                "(select " +
+                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
+                "  c_city, c_state, c_zip, c_data " +
+                "from customer " +
+                "where c_w_id = {0,number,#} " +
+                "  and c_d_id = {1,number,#} " +
+                "  and c_id = {2,number,#}) " +
+                "on conflict (c_w_id,c_d_id,c_id) do nothing;";
         }
 		
         boolean trace = LOG.isDebugEnabled();
@@ -256,12 +283,18 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             rs.close();
 
             // migration txn
-            migration1.setInt(1, w_id);
-            migration1.setInt(2, d_id);
-            migration1.setInt(3, c_id);
+            // migration1.setInt(1, w_id);
+            // migration1.setInt(2, d_id);
+            // migration1.setInt(3, c_id);
+            // conn.setAutoCommit(false);
+            // migration1.executeQuery();
+            // stmt.executeUpdate(migrationSQL2);
+            // conn.commit();
+
             conn.setAutoCommit(false);
-            migration1.executeQuery();
-            stmt.executeUpdate(migrationSQL2);
+            String migration = MessageFormat.format(migrationSQL3,
+                w_id, d_id, c_id);
+            stmt.executeUpdate(migration);
             conn.commit();
 
             int idx = 1; // HACK: So that we can debug this query
