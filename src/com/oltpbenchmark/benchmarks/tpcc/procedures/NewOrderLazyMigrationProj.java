@@ -74,7 +74,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			"  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
 			" WHERE C_W_ID = ? " +
 			"   AND C_D_ID = ? " +
-			"   AND C_ID = ?");
+			"   AND C_ID = ?  FOR UPDATE");
 
     public final SQLStmt stmtGetWhseSQL = new SQLStmt(
     		"SELECT W_TAX " + 
@@ -197,36 +197,36 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
 		int customerID = TPCCUtil.getCustomerID(gen);
 
-		int probability = TPCCUtil.randomNumber(1, 100, gen); 
-		if (probability <= 20) {
-			if(w.t_c_w_id.get() == null) {
-				w.t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
-				w.t_c_d_id.set(1);
-				w.t_c_id.set(1);
-			} else {
-				// I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
-				// It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
-				// which will be counted into the throughput. As long as the migration is performed in order, it
-				// will be completed sooner or later.
-				if (w.t_c_id.get().intValue() == 3000) {
-					if (w.t_c_d_id.get().intValue() == 10) {
-						w.t_c_w_id.set(w.t_c_w_id.get().intValue() + 1); // auto increment
-						w.t_c_d_id.set(1);
-						w.t_c_id.set(1);                    
-					} else {
-						w.t_c_d_id.set(w.t_c_d_id.get().intValue() + 1); // auto increment
-						w.t_c_id.set(1);
-					}
-				} else {
-					w.t_c_id.set(w.t_c_id.get().intValue() + 1); // auto increment 
-				}
-			}
-			// assign a determinstic predicate
-			terminalWarehouseID = w.t_c_w_id.get().intValue(); 
-			districtID = w.t_c_d_id.get().intValue(); 
-			customerID = w.t_c_id.get().intValue(); 
-			LOG.info("worker_" + w.getId() + " (" + terminalWarehouseID + "," + districtID + "," + customerID + ")");
-		}
+		// int probability = TPCCUtil.randomNumber(1, 100, gen); 
+		// if (probability <= 80) {
+		// 	if(w.t_c_w_id.get() == null) {
+		// 		w.t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
+		// 		w.t_c_d_id.set(1);
+		// 		w.t_c_id.set(1);
+		// 	} else {
+		// 		// I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
+		// 		// It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
+		// 		// which will be counted into the throughput. As long as the migration is performed in order, it
+		// 		// will be completed sooner or later.
+		// 		if (w.t_c_id.get().intValue() == 3000) {
+		// 			if (w.t_c_d_id.get().intValue() == 10) {
+		// 				w.t_c_w_id.set(w.t_c_w_id.get().intValue() + 1); // auto increment
+		// 				w.t_c_d_id.set(1);
+		// 				w.t_c_id.set(1);                    
+		// 			} else {
+		// 				w.t_c_d_id.set(w.t_c_d_id.get().intValue() + 1); // auto increment
+		// 				w.t_c_id.set(1);
+		// 			}
+		// 		} else {
+		// 			w.t_c_id.set(w.t_c_id.get().intValue() + 1); // auto increment 
+		// 		}
+		// 	}
+		// 	// assign a determinstic predicate
+		// 	terminalWarehouseID = w.t_c_w_id.get().intValue(); 
+		// 	districtID = w.t_c_d_id.get().intValue(); 
+		// 	customerID = w.t_c_id.get().intValue(); 
+		// 	// LOG.info("worker_" + w.getId() + " (" + terminalWarehouseID + "," + districtID + "," + customerID + ")");
+		// }
 
 		int numItems = (int) TPCCUtil.randomNumber(5, 15, gen);
 		int[] itemIDs = new int[numItems];
@@ -293,15 +293,15 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
             conn.setAutoCommit(false);
             String migration = MessageFormat.format(migrationSQL3,
                 w_id, d_id, c_id);
-            stmt.executeUpdate(migration);
-            conn.commit();
+			stmt.executeUpdate(migration);
+			conn.commit();
 
 			stmtGetCust.setInt(1, w_id);
 			stmtGetCust.setInt(2, d_id);
 			stmtGetCust.setInt(3, c_id);
 			ResultSet rs = stmtGetCust.executeQuery();
 			if (!rs.next())
-				throw new RuntimeException("C_D_ID=" + d_id
+  				throw new RuntimeException("C_D_ID=" + d_id
 						+ " C_ID=" + c_id + " not found!");
 			c_discount = rs.getFloat("C_DISCOUNT");
 			c_last = rs.getString("C_LAST");

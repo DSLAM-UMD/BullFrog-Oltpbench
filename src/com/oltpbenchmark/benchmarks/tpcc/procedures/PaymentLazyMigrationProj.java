@@ -101,7 +101,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
-            "   AND C_ID = ?");
+            "   AND C_ID = ? FOR UPDATE");
 
     public SQLStmt payUpdateCustBalCdataSQL = new SQLStmt(
             "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
@@ -167,7 +167,7 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
             "   AND C_LAST = ? " +
-            " ORDER BY C_FIRST;");
+            " ORDER BY C_FIRST FOR UPDATE;");
 
     // Payment Txn
     private PreparedStatement payUpdateWhse = null;
@@ -293,38 +293,38 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             customerID = TPCCUtil.getCustomerID(gen);
         }
 
-        if (!customerByName) {
-            int probability = TPCCUtil.randomNumber(1, 100, gen); 
-            if (probability <= 80) {
-                if(w.t_c_w_id.get() == null) {
-                    w.t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
-                    w.t_c_d_id.set(1);
-                    w.t_c_id.set(1);
-                } else {
-                    // I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
-                    // It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
-                    // which will be counted into the throughput. As long as the migration is performed in order, it
-                    // will be completed sooner or later.
-                    if (w.t_c_id.get().intValue() == 3000) {
-                        if (w.t_c_d_id.get().intValue() == 10) {
-                            w.t_c_w_id.set(w.t_c_w_id.get().intValue() + 1); // auto increment
-                            w.t_c_d_id.set(1);
-                            w.t_c_id.set(1);                    
-                        } else {
-                            w.t_c_d_id.set(w.t_c_d_id.get().intValue() + 1); // auto increment
-                            w.t_c_id.set(1);
-                        }
-                    } else {
-                        w.t_c_id.set(w.t_c_id.get().intValue() + 1); // auto increment 
-                    }
-                }
-                // assign a determinstic predicate
-                customerWarehouseID = w.t_c_w_id.get().intValue(); 
-                customerDistrictID = w.t_c_d_id.get().intValue(); 
-                customerID = w.t_c_id.get().intValue(); 
-                LOG.info("worker_" + w.getId() + " (" + customerWarehouseID + "," + customerDistrictID + "," + customerID + ")");
-            }
-        }
+        // if (!customerByName) {
+        //     int probability = TPCCUtil.randomNumber(1, 100, gen); 
+        //     if (probability <= 80) {
+        //         if(w.t_c_w_id.get() == null) {
+        //             w.t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
+        //             w.t_c_d_id.set(1);
+        //             w.t_c_id.set(1);
+        //         } else {
+        //             // I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
+        //             // It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
+        //             // which will be counted into the throughput. As long as the migration is performed in order, it
+        //             // will be completed sooner or later.
+        //             if (w.t_c_id.get().intValue() == 3000) {
+        //                 if (w.t_c_d_id.get().intValue() == 10) {
+        //                     w.t_c_w_id.set(w.t_c_w_id.get().intValue() + 1); // auto increment
+        //                     w.t_c_d_id.set(1);
+        //                     w.t_c_id.set(1);                    
+        //                 } else {
+        //                     w.t_c_d_id.set(w.t_c_d_id.get().intValue() + 1); // auto increment
+        //                     w.t_c_id.set(1);
+        //                 }
+        //             } else {
+        //                 w.t_c_id.set(w.t_c_id.get().intValue() + 1); // auto increment 
+        //             }
+        //         }
+        //         // assign a determinstic predicate
+        //         customerWarehouseID = w.t_c_w_id.get().intValue(); 
+        //         customerDistrictID = w.t_c_d_id.get().intValue(); 
+        //         customerID = w.t_c_id.get().intValue(); 
+        //         // LOG.info("worker_" + w.getId() + " (" + customerWarehouseID + "," + customerDistrictID + "," + customerID + ")");
+        //     }
+        // }
 
         float paymentAmount = (float) (TPCCUtil.randomNumber(100, 500000, gen) / 100.0);
 

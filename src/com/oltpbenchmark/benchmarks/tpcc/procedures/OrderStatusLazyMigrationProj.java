@@ -104,7 +104,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ + 
             " where c_w_id = {0,number,#} " +
             "  and c_d_id = {1,number,#} " +
-            "  and c_id = {2,number,#};";
+            "  and c_id = {2,number,#} FOR UPDATE;";
 
     public SQLStmt customerByNameSQL1 = new SQLStmt(
             "migrate 1 customer " +
@@ -146,7 +146,7 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             " WHERE C_W_ID = {0,number,#} " +
             "   AND C_D_ID = {1,number,#} " +
             "   AND C_LAST = ''{2}'' " + 
-            " ORDER BY C_FIRST";
+            " ORDER BY C_FIRST FOR UPDATE";
 
 	private PreparedStatement ordStatGetNewestOrd = null;
 	private PreparedStatement ordStatGetOrderLines = null;
@@ -254,38 +254,38 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             c_id = TPCCUtil.getCustomerID(gen);
         }
 
-        if (!c_by_name) {
-            int probability = TPCCUtil.randomNumber(1, 100, gen); 
-            if (probability <= 80) {
-                if(w.t_c_w_id.get() == null) {
-                    w.t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
-                    w.t_c_d_id.set(1);
-                    w.t_c_id.set(1);
-                } else {
-                    // I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
-                    // It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
-                    // which will be counted into the throughput. As long as the migration is performed in order, it
-                    // will be completed sooner or later.
-                    if (w.t_c_id.get().intValue() == 3000) {
-                        if (w.t_c_d_id.get().intValue() == 10) {
-                            w.t_c_w_id.set(w.t_c_w_id.get().intValue() + 1); // auto increment
-                            w.t_c_d_id.set(1);
-                            w.t_c_id.set(1);                    
-                        } else {
-                            w.t_c_d_id.set(w.t_c_d_id.get().intValue() + 1); // auto increment
-                            w.t_c_id.set(1);
-                        }
-                    } else {
-                        w.t_c_id.set(w.t_c_id.get().intValue() + 1); // auto increment 
-                    }
-                }
-                // assign a determinstic predicate
-                w_id = w.t_c_w_id.get().intValue(); 
-                d_id = w.t_c_d_id.get().intValue(); 
-                c_id = w.t_c_id.get().intValue(); 
-                LOG.info("worker_" + w.getId() + " (" + w_id + "," + d_id + "," + c_id + ")");
-            }
-        }
+        // if (!c_by_name) {
+        //     int probability = TPCCUtil.randomNumber(1, 100, gen); 
+        //     if (probability <= 80) {
+        //         if(w.t_c_w_id.get() == null) {
+        //             w.t_c_w_id.set(w.getId() * 6 + 1); // w.getId() returns worker id.
+        //             w.t_c_d_id.set(1);
+        //             w.t_c_id.set(1);
+        //         } else {
+        //             // I didn't use a Bloom Filter to answer the question of whether or not a given tuple is migrated.
+        //             // It is not necessary to always choose nonmigrated tuples since the repeated txn is still a txn
+        //             // which will be counted into the throughput. As long as the migration is performed in order, it
+        //             // will be completed sooner or later.
+        //             if (w.t_c_id.get().intValue() == 3000) {
+        //                 if (w.t_c_d_id.get().intValue() == 10) {
+        //                     w.t_c_w_id.set(w.t_c_w_id.get().intValue() + 1); // auto increment
+        //                     w.t_c_d_id.set(1);
+        //                     w.t_c_id.set(1);                    
+        //                 } else {
+        //                     w.t_c_d_id.set(w.t_c_d_id.get().intValue() + 1); // auto increment
+        //                     w.t_c_id.set(1);
+        //                 }
+        //             } else {
+        //                 w.t_c_id.set(w.t_c_id.get().intValue() + 1); // auto increment 
+        //             }
+        //         }
+        //         // assign a determinstic predicate
+        //         w_id = w.t_c_w_id.get().intValue(); 
+        //         d_id = w.t_c_d_id.get().intValue(); 
+        //         c_id = w.t_c_id.get().intValue(); 
+        //         // LOG.info("worker_" + w.getId() + " (" + w_id + "," + d_id + "," + c_id + ")");
+        //     }
+        // }
 
         int o_id = -1, o_carrier_id = -1;
         Timestamp o_entry_d;

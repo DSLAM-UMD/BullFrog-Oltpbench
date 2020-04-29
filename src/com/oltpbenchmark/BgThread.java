@@ -73,9 +73,7 @@ public class BgThread extends Thread {
                     // <= 3000 tuples will be migrated each time
                     String migration = MessageFormat.format(migrationFmt, c_w_id, c_d_id);
                     LOG.info(migration);
-                    c.setAutoCommit(false);
                     stmt.executeUpdate(migration);
-                    c.commit();
                     Thread.sleep(400);
                     if (!flag) break;
                 }
