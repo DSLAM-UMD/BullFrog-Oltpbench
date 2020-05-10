@@ -390,11 +390,13 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             // stmt.executeUpdate(customerByNameSQL2);
             // conn.commit();
 
-            conn.setAutoCommit(false);
+            if (!DBWorkload.IS_CONFLICT)
+                conn.setAutoCommit(false);
             String migration = MessageFormat.format(customerByNameSQL,
                 customerWarehouseID, customerDistrictID, customerLastName);
             stmt.executeUpdate(migration);
-            conn.commit();
+            if (!DBWorkload.IS_CONFLICT)
+                conn.commit();
             
             rs = customerByName3.executeQuery();
 
@@ -406,7 +408,8 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             rs.close();
 
             if (customers.size() == 0) {
-                throw new RuntimeException("C_LAST=" + customerLastName + " C_D_ID=" + customerDistrictID + " C_W_ID=" + customerWarehouseID + " not found!");
+                // throw new RuntimeException("C_LAST=" + customerLastName + " C_D_ID=" + customerDistrictID + " C_W_ID=" + customerWarehouseID + " not found!");
+                return null;
             }
     
             // TPC-C 2.5.2.2: Position n / 2 rounded up to the next integer, but
@@ -428,17 +431,19 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
             // payGetCust1.executeQuery();
             // stmt.executeUpdate(payGetCustSQL2);
             // conn.commit();
-
-            conn.setAutoCommit(false);
+            if (!DBWorkload.IS_CONFLICT)
+                conn.setAutoCommit(false);
             String migration = MessageFormat.format(payGetCustSQL,
                 customerWarehouseID, customerDistrictID, customerID);
             stmt.executeUpdate(migration);
-            conn.commit();            
+            if (!DBWorkload.IS_CONFLICT)
+                conn.commit();            
 
             rs = payGetCust3.executeQuery();
 
             if (!rs.next()) {
-                throw new RuntimeException("C_ID=" + customerID + " C_D_ID=" + customerDistrictID + " C_W_ID=" + customerWarehouseID + " not found!");
+                // throw new RuntimeException("C_ID=" + customerID + " C_D_ID=" + customerDistrictID + " C_W_ID=" + customerWarehouseID + " not found!");
+                return null;
             }
     
             c = TPCCUtil.newCustomerFromResults2(rs);

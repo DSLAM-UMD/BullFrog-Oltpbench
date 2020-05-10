@@ -361,8 +361,11 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
         }
 
         // Add a background thread to find non-migrated tuples and migrate them
-        BgThread bgWorker = new BgThread("A background thread for lazy migration"); 
-        bgWorker.start();
+        BgThread1 bgWorker1 = new BgThread1("A background thread for lazy migration"); 
+        bgWorker1.start();
+
+        BgThread2 bgWorker2 = new BgThread2("A background thread for lazy migration"); 
+        bgWorker2.start();
 
         // Main Loop
         while (true) {           
@@ -561,8 +564,10 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
                 } // FOR
             } // FOR
 
-            bgWorker.stopRunning();
-            bgWorker.join();
+            bgWorker1.stopRunning();
+            bgWorker2.stopRunning();
+            bgWorker1.join();
+            bgWorker2.join();
             return (results);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);

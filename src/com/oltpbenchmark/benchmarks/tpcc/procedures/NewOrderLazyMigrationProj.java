@@ -290,19 +290,22 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 			// stmt.executeUpdate(migrationSQL2);
 			// conn.commit();
 
-            conn.setAutoCommit(false);
+			if (!DBWorkload.IS_CONFLICT)
+            	conn.setAutoCommit(false);
             String migration = MessageFormat.format(migrationSQL3,
                 w_id, d_id, c_id);
 			stmt.executeUpdate(migration);
-			conn.commit();
+			if (!DBWorkload.IS_CONFLICT)
+				conn.commit();
 
 			stmtGetCust.setInt(1, w_id);
 			stmtGetCust.setInt(2, d_id);
 			stmtGetCust.setInt(3, c_id);
 			ResultSet rs = stmtGetCust.executeQuery();
 			if (!rs.next())
-  				throw new RuntimeException("C_D_ID=" + d_id
-						+ " C_ID=" + c_id + " not found!");
+  				// throw new RuntimeException("C_D_ID=" + d_id
+				// 		+ " C_ID=" + c_id + " not found!");
+				return;
 			c_discount = rs.getFloat("C_DISCOUNT");
 			c_last = rs.getString("C_LAST");
 			c_credit = rs.getString("C_CREDIT");

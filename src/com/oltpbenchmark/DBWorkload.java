@@ -65,6 +65,7 @@ public class DBWorkload {
     public static int MIGRATION_TXN_ID = -1;
     public static boolean IS_MIGRATED = false;
     public static boolean IS_CONFLICT = false;
+    public static String BACKGROUND_THREAD = null;
     
     /**
      * @param args
@@ -154,6 +155,11 @@ public class DBWorkload {
                 "migration",
                 true,
                 "migration transaction id");
+        options.addOption(
+                null,
+                "bgthread",
+                true,
+                "A backgroud thread for lazy migration");
 
         options.addOption("v", "verbose", false, "Display Messages");
         options.addOption("h", "help", false, "Print this help");
@@ -207,11 +213,15 @@ public class DBWorkload {
         // -------------------------------------------------------------------
         DB_PORT_NUMBER = argsLine.getOptionValue("port");
         DB_BINARY_PATH = argsLine.getOptionValue("path");
+        if (argsLine.hasOption("bgthread")) {
+            BACKGROUND_THREAD = argsLine.getOptionValue("bgthread");
+            LOG.info("background thread: " + BACKGROUND_THREAD);
+        }
+        
         if (argsLine.hasOption("migration")) {
             MIGRATION_TXN_ID = Integer.parseInt(argsLine.getOptionValue("migration"));
             LOG.info("migration txn id: " + MIGRATION_TXN_ID);
         }
-
         if (argsLine.hasOption("on-conflict")) {
             IS_CONFLICT = true;
         }

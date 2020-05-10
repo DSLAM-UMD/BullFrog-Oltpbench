@@ -310,11 +310,13 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             // stmt.executeUpdate(customerByNameSQL2);
             // conn.commit();
 
-            conn.setAutoCommit(false);
+            if (!DBWorkload.IS_CONFLICT)
+                conn.setAutoCommit(false);
             String migration = MessageFormat.format(customerByNameSQL,
                 w_id, d_id, c_last);
             stmt.executeUpdate(migration);
-            conn.commit();
+            if (!DBWorkload.IS_CONFLICT)
+                conn.commit();
 
             // Extract condition expressions and add it to lazy query
             String mQuery = MessageFormat.format(customerByNameSQL3,
@@ -334,7 +336,8 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             rs.close();
 
             if (customers.size() == 0) {
-                throw new RuntimeException("C_LAST=" + c_last + " C_D_ID=" + d_id + " C_W_ID=" + w_id + " not found!");
+                // throw new RuntimeException("C_LAST=" + c_last + " C_D_ID=" + d_id + " C_W_ID=" + w_id + " not found!");
+                return null;
             }
     
             // TPC-C 2.5.2.2: Position n / 2 rounded up to the next integer, but
@@ -357,11 +360,13 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             // payGetCust1.executeQuery();
             // stmt.executeUpdate(payGetCustSQL2);
             // conn.commit();
-            conn.setAutoCommit(false);
+            if (!DBWorkload.IS_CONFLICT)
+                conn.setAutoCommit(false);
             String migration = MessageFormat.format(payGetCustSQL,
                 w_id, d_id, c_id);
             stmt.executeUpdate(migration);
-            conn.commit();
+            if (!DBWorkload.IS_CONFLICT)
+                conn.commit();
 
             // Extract condition expressions and add it to lazy query
             String mQuery = MessageFormat.format(payGetCustSQL3,
@@ -374,7 +379,8 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
             ResultSet rs = stmt.executeQuery(mQuery);
 
             if (!rs.next()) {
-                throw new RuntimeException("C_ID=" + c_id + " C_D_ID=" + d_id + " C_W_ID=" + w_id + " not found!");
+                // throw new RuntimeException("C_ID=" + c_id + " C_D_ID=" + d_id + " C_W_ID=" + w_id + " not found!");
+                return null;
             }
     
             c = TPCCUtil.newCustomerFromResults2(rs);
