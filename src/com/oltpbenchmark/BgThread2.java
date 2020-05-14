@@ -58,6 +58,53 @@ public class BgThread2 extends Thread {
                     migrationFmt += " on conflict (c_w_id,c_d_id,c_id) do nothing;";
                 }
             }
+            if (DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
+                migrationFmt =                     
+                    " insert into orderline_agg(" +
+                    " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +    
+                    " (select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+                    " from order_line where ol_w_id = {0,number,#} and ol_d_id = {1,number,#}" + 
+                    " group by ol_o_id, ol_d_id, ol_w_id)";
+                if (DBWorkload.IS_CONFLICT) {
+                    migrationFmt += " on conflict (ol_o_id, ol_d_id, ol_w_id) do nothing;";
+                }
+            }
+            if (DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
+                migrationFmt =                     
+                    " insert into orderline_agg(" +
+                    " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +    
+                    " (select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+                    " from order_line where ol_w_id = {0,number,#} and ol_d_id = {1,number,#}" + 
+                    " group by ol_o_id, ol_d_id, ol_w_id)";
+                if (DBWorkload.IS_CONFLICT) {
+                    migrationFmt += " on conflict (ol_o_id, ol_d_id, ol_w_id) do nothing;";
+                }
+            }
+            if (DBWorkload.BACKGROUND_THREAD.equals("join")) {
+                migrationFmt =                     
+                    "insert into orderline_stock(" +
+                    " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+                    " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
+                    " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
+                    " s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
+                    " s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +
+                    " (select " +
+                    "  ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
+                    "  ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
+                    "  s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
+                    "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
+                    "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
+                    "  from order_line, stock " +
+                    "  where ol_w_id = {0,number,#} " +
+                    "  and ol_d_id = {1,number,#} " +
+                    "  and ol_o_id > {2,number,#} " +
+                    "  and ol_o_id <= {3,number,#} " +
+                    "  and ol_i_id = s_i_id) ";
+                if (DBWorkload.IS_CONFLICT) {
+                    migrationFmt += " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number,s_w_id,s_i_id) "
+                                 +  " DO NOTHING;";
+                }
+            }
         }
 
         Connection c = null;
@@ -75,9 +122,9 @@ public class BgThread2 extends Thread {
 
         try { 
             stmt = c.createStatement();
-            // TODO: do we need a bloom filter in here?
             if (DBWorkload.BACKGROUND_THREAD != null) {
-                if (DBWorkload.BACKGROUND_THREAD.equals("projection") || DBWorkload.BACKGROUND_THREAD.equals("proj")) {
+                if (DBWorkload.BACKGROUND_THREAD.equals("projection")  || DBWorkload.BACKGROUND_THREAD.equals("proj")
+                 || DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
                     for (int c_w_id = 50; c_w_id > 25; c_w_id--) {
                         for (int c_d_id = 1; c_d_id <= 10; c_d_id++) {
                             // <= 3000 tuples will be migrated each time
@@ -89,6 +136,28 @@ public class BgThread2 extends Thread {
                         }
                         if (!flag) break;
                     }
+                }
+                
+                if (DBWorkload.BACKGROUND_THREAD.equals("join")) {
+                    int o_start = 0;
+                    for (int ol_w_id = 5; ol_w_id >= 3; ol_w_id--) {
+                        if (ol_w_id == 3) {
+                            o_start = 1500;
+                        }
+                        for (int ol_d_id = 1; ol_d_id <= 10; ol_d_id++) {
+                            int prev = o_start;
+                            for (int ol_o_id = prev + 300; ol_o_id <= 3000; ol_o_id += 300) {
+                                String migration = MessageFormat.format(migrationFmt, ol_w_id, ol_d_id, prev, ol_o_id);
+                                LOG.info(migration);
+                                stmt.executeUpdate(migration);
+                                prev = ol_o_id;
+                                Thread.sleep(100);
+                                if (!flag) break;
+                            }
+                            if (!flag) break;
+                        }
+                        if (!flag) break;
+                    }                    
                 }
             }
             stmt.close();

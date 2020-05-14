@@ -18,6 +18,7 @@ package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
@@ -51,8 +52,8 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
             " and s_w_id = ? " +
             " and s_quantity < ?;");
     
-    public SQLStmt migrationSQL2 = new SQLStmt(
-            "migrate insert into orderline_stock(" +
+    public String migrationSQL2 =
+            "insert into orderline_stock(" +
             " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
             " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
             " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
@@ -65,7 +66,13 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
-            "  where ol_i_id = s_i_id)");
+            "  where ol_w_id = {0,number,#} " +
+            "  and ol_d_id = {1,number,#} " +
+            "  and ol_o_id < {2,number,#} " +
+            "  and ol_o_id >= {3,number,#} " +
+            "  and s_w_id = {4,number,#} " +
+            "  and s_quantity < {5,number,#} " +
+            "  and ol_i_id = s_i_id);";
 
     public SQLStmt stockGetCountStockSQL = new SQLStmt(
             "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT " +
@@ -81,6 +88,7 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
     private PreparedStatement stockGetCountStock = null;
     private PreparedStatement migration1 = null;
     private PreparedStatement migration2 = null;
+    private Statement stmt = null;
 
     public ResultSet run(Connection conn, Random gen,
             int w_id, int numWarehouses,
@@ -88,8 +96,8 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
             TPCCWorker w) throws SQLException {
 
         if (DBWorkload.IS_CONFLICT) {
-            migrationSQL2 = new SQLStmt(
-                "migrate insert into orderline_stock(" +
+            migrationSQL2 =
+                "insert into orderline_stock(" +
                 " ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, ol_delivery_d, " +
                 " ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info, s_w_id, " +
                 " s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
@@ -102,9 +110,15 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
                 "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
                 "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
                 "  from order_line, stock " +
-                "  where ol_i_id = s_i_id) " +
+                "  where ol_w_id = {0,number,#} " +
+                "  and ol_d_id = {1,number,#} " +
+                "  and ol_o_id < {2,number,#} " +
+                "  and ol_o_id >= {3,number,#} " +
+                "  and s_w_id = {4,number,#} " +
+                "  and s_quantity < {5,number,#} " +
+                "  and ol_i_id = s_i_id) " +
                 " ON CONFLICT (ol_w_id,ol_d_id,ol_o_id,ol_number,s_w_id,s_i_id) " +
-                " DO NOTHING;");
+                " DO NOTHING;";
         }
 
         boolean trace = LOG.isTraceEnabled(); 
@@ -112,7 +126,8 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
         stockGetDistOrderId = this.getPreparedStatement(conn, stockGetDistOrderIdSQL);
         stockGetCountStock= this.getPreparedStatement(conn, stockGetCountStockSQL);
         migration1 = this.getPreparedStatement(conn, migrationSQL1);
-        migration2 = this.getPreparedStatement(conn, migrationSQL2);
+        // migration2 = this.getPreparedStatement(conn, migrationSQL2);
+        stmt = conn.createStatement();
 
         int threshold = TPCCUtil.randomNumber(10, 20, gen);
         int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
@@ -132,14 +147,13 @@ public class StockLevelLazyMigrationJoin extends TPCCProcedure {
         o_id = rs.getInt("D_NEXT_O_ID");
         rs.close();
 
-        migration1.setInt(1, w_id);
-        migration1.setInt(2, d_id);
-        migration1.setInt(3, o_id);
-        migration1.setInt(4, o_id - 20);
-        migration1.setInt(5, w_id);
-        migration1.setInt(6, threshold);
-        migration1.executeQuery();
-        migration2.executeUpdate();
+        if (!DBWorkload.IS_CONFLICT)
+            conn.setAutoCommit(false);
+        String migration = MessageFormat.format(migrationSQL2,
+            w_id, d_id, o_id, o_id - 20, w_id, threshold);
+        stmt.executeUpdate(migration);
+        if (!DBWorkload.IS_CONFLICT)
+            conn.commit();
 
         stockGetCountStock.setInt(1, w_id);
         stockGetCountStock.setInt(2, d_id);

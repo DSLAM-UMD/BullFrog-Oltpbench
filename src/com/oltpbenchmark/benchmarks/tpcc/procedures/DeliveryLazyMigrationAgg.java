@@ -79,8 +79,8 @@ public class DeliveryLazyMigrationAgg extends TPCCProcedure {
             "  from order_line " +
             "  group by ol_o_id, ol_d_id, ol_w_id) ";
 
-    public  String migrationSQL3 = 
-            "  insert into orderline_agg(" +
+    public String migrationSQL3 = 
+            " insert into orderline_agg(" +
             " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +    
             " (select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
             " from order_line where ol_o_id = {0,number,#} and ol_d_id = {1,number,#} and ol_w_id = {2,number,#}" + 
@@ -136,6 +136,15 @@ public class DeliveryLazyMigrationAgg extends TPCCProcedure {
             "  group by ol_o_id, ol_d_id, ol_w_id) " +
             " ON CONFLICT (ol_o_id,ol_d_id,ol_w_id) " +
             " DO NOTHING;";            
+
+            migrationSQL3 = 
+            " insert into orderline_agg(" +
+            " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +    
+            " (select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
+            " from order_line where ol_o_id = {0,number,#} and ol_d_id = {1,number,#} and ol_w_id = {2,number,#}" + 
+            " group by ol_o_id, ol_d_id, ol_w_id) " +
+            " ON CONFLICT (ol_o_id,ol_d_id,ol_w_id) " +
+            " DO NOTHING;";
         }
 
         boolean trace = LOG.isDebugEnabled();
@@ -224,17 +233,13 @@ public class DeliveryLazyMigrationAgg extends TPCCProcedure {
                 throw new RuntimeException(msg);
             }
 
-            // migration1.setInt(1, no_o_id);
-            // migration1.setInt(2, d_id);
-            // migration1.setInt(3, w_id);
-            conn.setAutoCommit(false);
-            // migration1.executeQuery();
-            // stmt.executeUpdate(migrationSQL2);
+            if (!DBWorkload.IS_CONFLICT)
+                conn.setAutoCommit(false);
             String migration = MessageFormat.format(migrationSQL3,
                 no_o_id, d_id, w_id);
-
             stmt.executeUpdate(migration);
-            conn.commit();
+            if (!DBWorkload.IS_CONFLICT)
+                conn.commit();
 
 
             delivUpdateDeliveryDate.setTimestamp(1, timestamp);

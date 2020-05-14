@@ -291,11 +291,13 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             // stmt.executeUpdate(migrationSQL2);
             // conn.commit();
 
-            conn.setAutoCommit(false);
+            if (!DBWorkload.IS_CONFLICT)
+                conn.setAutoCommit(false);
             String migration = MessageFormat.format(migrationSQL3,
                 w_id, d_id, c_id);
             stmt.executeUpdate(migration);
-            conn.commit();
+            if (!DBWorkload.IS_CONFLICT)
+                conn.commit();
 
             int idx = 1; // HACK: So that we can debug this query
             delivUpdateCustBalDelivCnt.setDouble(idx++, ol_total);
