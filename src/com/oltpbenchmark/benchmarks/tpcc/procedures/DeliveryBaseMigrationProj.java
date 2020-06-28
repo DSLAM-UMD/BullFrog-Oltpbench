@@ -76,7 +76,7 @@ public class DeliveryBaseMigrationProj extends TPCCProcedure {
 			"   AND OL_W_ID = ?");
 
 	public SQLStmt delivUpdateCustBalDelivCntSQL = new SQLStmt(
-	        "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
+	        "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ1 +
 	        "   SET C_BALANCE = C_BALANCE + ?," +
 			"       C_DELIVERY_CNT = C_DELIVERY_CNT + 1 " +
 			" WHERE C_W_ID = ? " +

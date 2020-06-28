@@ -95,6 +95,7 @@ public class TPCCUtil {
 		c.c_state = rs.getString("c_state");
 		c.c_zip = rs.getString("c_zip");
 		c.c_credit = rs.getString("c_credit");
+		c.c_discount = rs.getFloat("c_discount");
 		c.c_balance = rs.getFloat("c_balance");
 		c.c_ytd_payment = rs.getFloat("c_ytd_payment");
 		c.c_payment_cnt = rs.getInt("c_payment_cnt");

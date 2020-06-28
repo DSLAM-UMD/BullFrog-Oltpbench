@@ -59,23 +59,23 @@ public class PaymentBaseMigrationProj extends TPCCProcedure {
             "   AND D_ID = ?");
 
     public SQLStmt payGetCustSQL = new SQLStmt(
-            "SELECT C_FIRST, C_LAST, C_STREET_1, " +
+	        "SELECT p1.C_FIRST, p1.C_LAST, C_STREET_1, " +
             "       C_CITY, C_STATE, C_ZIP, C_CREDIT, " +
-            "       C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA, C_ID " +
-            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
-            " WHERE C_W_ID = ? " +
-            "   AND C_D_ID = ? " +
-            "   AND C_ID = ?");
+            "       C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA, p1.C_ID " +
+            "  FROM customer_proj1 p1, customer_proj2 p2 " +
+            " WHERE p1.C_W_ID = ? AND p1.C_W_ID = p2.C_W_ID " +
+            "   AND p1.C_D_ID = ? AND p1.C_D_ID = p2.C_D_ID " +
+            "   AND p1.C_ID = ? AND p1.C_ID = p2.C_ID");
 
     public SQLStmt payGetCustCdataSQL = new SQLStmt(
             "SELECT C_DATA " +
-            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
+            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ1 +
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
             "   AND C_ID = ?");
 
     public SQLStmt payUpdateCustBalCdataSQL = new SQLStmt(
-            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
+            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ1 +
             "   SET C_BALANCE = ?, " +
             "       C_YTD_PAYMENT = ?, " +
             "       C_PAYMENT_CNT = ?, " +
@@ -85,7 +85,7 @@ public class PaymentBaseMigrationProj extends TPCCProcedure {
             "   AND C_ID = ?");
 
     public SQLStmt payUpdateCustBalSQL = new SQLStmt(
-            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
+            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ1 +
             "   SET C_BALANCE = ?, " +
             "       C_YTD_PAYMENT = ?, " +
             "       C_PAYMENT_CNT = ? " +
@@ -99,14 +99,14 @@ public class PaymentBaseMigrationProj extends TPCCProcedure {
             " VALUES (?,?,?,?,?,?,?,?)");
 
     public SQLStmt customerByNameSQL = new SQLStmt(
-            "SELECT C_FIRST, C_ID, C_STREET_1, C_CITY, " +
+	        "SELECT p1.C_FIRST, p1.C_ID, C_STREET_1, C_CITY, " +
             "       C_STATE, C_ZIP, C_CREDIT, C_DISCOUNT, " +
             "       C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA " +
-            "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
-            " WHERE C_W_ID = ? " +
-            "   AND C_D_ID = ? " +
-            "   AND C_LAST = ? " +
-            " ORDER BY C_FIRST");
+            "  FROM customer_proj1 p1, customer_proj2 p2 " +
+            " WHERE p1.C_W_ID = ? AND p1.C_W_ID = p2.C_W_ID " +
+            "   AND p1.C_D_ID = ? AND p1.C_D_ID = p2.C_D_ID " +
+            "   AND p1.C_LAST = ? AND p1.C_LAST = p2.C_LAST " +
+            " ORDER BY p1.C_FIRST");
 
     // Payment Txn
     private PreparedStatement payUpdateWhse = null;

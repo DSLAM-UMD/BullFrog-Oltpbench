@@ -455,9 +455,10 @@ public class DBWorkload {
                     }
                 }
                 Phase.Arrival arrival=Phase.Arrival.REGULAR;
-                String arrive=work.getString("@arrival","regular");
-                if(arrive.toUpperCase().equals("POISSON"))
+                String arrive=work.getString("arrival","regular");
+                if(arrive.toUpperCase().equals("POISSON")) {
                     arrival=Phase.Arrival.POISSON;
+                }
                 
                 // If serial is enabled then run all queries exactly once in serial (rather than
                 // random) order

@@ -80,8 +80,8 @@ public class NewOrderLazyMigrationJoin extends TPCCProcedure {
             "   AND S_W_ID = ?");
 
 	public final SQLStmt  stmtInsertOrderLineSQL = new SQLStmt(
-			"INSERT INTO " + TPCCConstants.TABLENAME_ORDERLINE_STOCK +
-			" (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_dist_info, " +
+			" insert into orderline_stock (" +
+			"  ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_dist_info, " +
 			"  s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, " +
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
 			"  s_dist_07, s_dist_08, s_dist_09, s_dist_10) " +

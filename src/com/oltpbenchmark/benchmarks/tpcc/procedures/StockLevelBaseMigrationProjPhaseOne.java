@@ -17,7 +17,7 @@
 package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
@@ -38,28 +38,43 @@ public class StockLevelBaseMigrationProjPhaseOne extends TPCCProcedure {
     private static final Logger LOG = Logger.getLogger(StockLevelBaseMigrationProjPhaseOne.class);
     private static AtomicLong numRun = new AtomicLong(0);
 
-    public SQLStmt migrationSQL = new SQLStmt(
-            "insert into customer_proj(" +
-            " c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, " +
-            " c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, " +
-            " c_street_1, c_city, c_state, c_zip, c_data) " +
-            " (select " +
-            " c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, " +
-            " c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, " +
-            " c_street_1, c_city, c_state, c_zip, c_data" +
-            "  from customer); ");
+    public String migrationSQL1 = 
+            " insert into customer_proj1(" +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data) " +
+            "(select " +
+            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data " +
+            "from customer) " +
+            "on conflict (c_w_id,c_d_id,c_id) do nothing;";
 
-            // insert into customer_proj(
+    public String migrationSQL2 = 
+            " insert into customer_proj2(" +
+            "  c_w_id, c_d_id, c_id, c_last, c_first, " +
+            "  c_street_1, c_city, c_state, c_zip) " +
+            "(select " +
+            "  c_w_id, c_d_id, c_id, c_last, c_first, " +
+            "  c_street_1, c_city, c_state, c_zip " +
+            "from customer) " +
+            "on conflict (c_w_id,c_d_id,c_id) do nothing;";
+
+            // insert into customer_proj1(
             //     c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first,
-            //     c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt,
-            //     c_street_1, c_city, c_state, c_zip, c_data)
+            //     c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data)
             //     (select
             //     c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first,
-            //     c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt,
-            //     c_street_1, c_city, c_state, c_zip, c_data
+            //     c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data
             //     from customer); 
 
-    private PreparedStatement migration = null;
+            // insert into customer_proj2(
+            //     c_w_id, c_d_id, c_id, c_last, c_first,
+            //     c_street_1, c_city, c_state, c_zip)
+            //     (select
+            //     c_w_id, c_d_id, c_id, c_last, c_first,
+            //     c_street_1, c_city, c_state, c_zip
+            //     from customer); 
+
+    private Statement stmt = null;
 
     public ResultSet run(Connection conn, Random gen,
             int w_id, int numWarehouses,
@@ -68,11 +83,15 @@ public class StockLevelBaseMigrationProjPhaseOne extends TPCCProcedure {
 
         boolean trace = LOG.isTraceEnabled();
 
-        migration = this.getPreparedStatement(conn, migrationSQL);
+        stmt = conn.createStatement();
 
         if (numRun.getAndIncrement() == 0) {
-            migration.executeUpdate();
-            
+            long startTime = System.currentTimeMillis();
+            stmt.addBatch(migrationSQL1);
+            stmt.addBatch(migrationSQL2);
+            stmt.executeBatch();
+            long endTime = System.currentTimeMillis();
+            LOG.info("[baseline] eager migration time: " + (endTime - startTime) + "ms");
         }
 
         if (trace) LOG.trace("[baseline] migration proj phase one - customer_proj done!");

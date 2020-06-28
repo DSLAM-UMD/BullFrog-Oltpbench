@@ -79,40 +79,32 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             "   AND OL_W_ID = ?");
             
     public SQLStmt delivUpdateCustBalDelivCntSQL = new SQLStmt(
-            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
+            "UPDATE " + TPCCConstants.TABLENAME_CUSTOMER_PROJ1 +
             "   SET C_BALANCE = C_BALANCE + ?," +
             "       C_DELIVERY_CNT = C_DELIVERY_CNT + 1 " +
             " WHERE C_W_ID = ? " +
             "   AND C_D_ID = ? " +
             "   AND C_ID = ? ");
 
-    public final SQLStmt migrationSQL1 = new SQLStmt(
-            "migrate 1 customer " +
-            "explain select count(*) from customer_proj_v " +
-            "where c_w_id = ?" +
-            "  and c_d_id = ?" +
-            "  and c_id = ?;");
-    
-    public String migrationSQL2 =
-            "migrate insert into customer_proj(" +
+    public String migrationSQL1 = 
+            " insert into customer_proj1(" +
             "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-            "  c_city, c_state, c_zip, c_data) " +
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data) " +
             "(select " +
             "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-            "  c_city, c_state, c_zip, c_data " +
-            "from customer);";
+            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data " +
+            "from customer " +
+            "where c_w_id = {0,number,#} " +
+            "  and c_d_id = {1,number,#} " +
+            "  and c_id = {2,number,#});";
 
-    public String migrationSQL3 = 
-            " insert into customer_proj(" +
-            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-            "  c_city, c_state, c_zip, c_data) " +
+    public String migrationSQL2 = 
+            " insert into customer_proj2(" +
+            "  c_w_id, c_d_id, c_id, c_last, c_first, " +
+            "  c_street_1, c_city, c_state, c_zip) " +
             "(select " +
-            "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-            "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-            "  c_city, c_state, c_zip, c_data " +
+            "  c_w_id, c_d_id, c_id, c_last, c_first, " +
+            "  c_street_1, c_city, c_state, c_zip " +
             "from customer " +
             "where c_w_id = {0,number,#} " +
             "  and c_d_id = {1,number,#} " +
@@ -125,8 +117,6 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 	private PreparedStatement delivUpdateCarrierId = null;
 	private PreparedStatement delivUpdateDeliveryDate = null;
     private PreparedStatement delivSumOrderAmount = null;
-    private PreparedStatement migration1 = null;
-    // private PreparedStatement migration2 = null;
     private PreparedStatement delivUpdateCustBalDelivCnt = null;
     private Statement stmt = null;
 
@@ -135,27 +125,26 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 			int terminalDistrictLowerID, int terminalDistrictUpperID,
 			TPCCWorker w) throws SQLException {
 
-        if (DBWorkload.IS_CONFLICT) {
-            migrationSQL2 =
-                "migrate insert into customer_proj(" +
+        if (DBWorkload.IS_CONFLICT) {         
+            migrationSQL1 = 
+                " insert into customer_proj1(" +
                 "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-                "  c_city, c_state, c_zip, c_data) " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data) " +
                 "(select " +
                 "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-                "  c_city, c_state, c_zip, c_data " +
-                "from customer) " +
-                "on conflict (c_w_id,c_d_id,c_id) do nothing;";            
-            migrationSQL3 = 
-                " insert into customer_proj(" +
-                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-                "  c_city, c_state, c_zip, c_data) " +
+                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data " +
+                "from customer " +
+                "where c_w_id = {0,number,#} " +
+                "  and c_d_id = {1,number,#} " +
+                "  and c_id = {2,number,#}) " +
+                "on conflict (c_w_id,c_d_id,c_id) do nothing;";
+            migrationSQL2 = 
+                " insert into customer_proj2(" +
+                "  c_w_id, c_d_id, c_id, c_last, c_first, " +
+                "  c_street_1, c_city, c_state, c_zip) " +
                 "(select " +
-                "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
-                "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_street_1, " +
-                "  c_city, c_state, c_zip, c_data " +
+                "  c_w_id, c_d_id, c_id, c_last, c_first, " +
+                "  c_street_1, c_city, c_state, c_zip " +
                 "from customer " +
                 "where c_w_id = {0,number,#} " +
                 "  and c_d_id = {1,number,#} " +
@@ -173,8 +162,6 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 		delivUpdateCarrierId = this.getPreparedStatement(conn, delivUpdateCarrierIdSQL);
 		delivUpdateDeliveryDate = this.getPreparedStatement(conn, delivUpdateDeliveryDateSQL);
         delivSumOrderAmount = this.getPreparedStatement(conn, delivSumOrderAmountSQL);
-        migration1 = this.getPreparedStatement(conn, migrationSQL1);
-        // migration2 = this.getPreparedStatement(conn, migrationSQL2);
         delivUpdateCustBalDelivCnt = this.getPreparedStatement(conn, delivUpdateCustBalDelivCntSQL);
         stmt = conn.createStatement();
 
@@ -283,19 +270,12 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
             rs.close();
 
             // migration txn
-            // migration1.setInt(1, w_id);
-            // migration1.setInt(2, d_id);
-            // migration1.setInt(3, c_id);
-            // conn.setAutoCommit(false);
-            // migration1.executeQuery();
-            // stmt.executeUpdate(migrationSQL2);
-            // conn.commit();
 
             if (!DBWorkload.IS_CONFLICT)
                 conn.setAutoCommit(false);
-            String migration = MessageFormat.format(migrationSQL3,
-                w_id, d_id, c_id);
-            stmt.executeUpdate(migration);
+            stmt.addBatch(MessageFormat.format(migrationSQL1, w_id, d_id, c_id));
+            stmt.addBatch(MessageFormat.format(migrationSQL2, w_id, d_id, c_id));
+            stmt.executeBatch();
             if (!DBWorkload.IS_CONFLICT)
                 conn.commit();
 

@@ -36,7 +36,7 @@ public class NewOrderBaseMigrationProj extends TPCCProcedure {
 
     public final SQLStmt stmtGetCustSQL = new SQLStmt(
     		"SELECT C_DISCOUNT, C_LAST, C_CREDIT" +
-	        "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ +
+	        "  FROM " + TPCCConstants.TABLENAME_CUSTOMER_PROJ1 +
 	        " WHERE C_W_ID = ? " +
 	        "   AND C_D_ID = ? " +
 	        "   AND C_ID = ?");

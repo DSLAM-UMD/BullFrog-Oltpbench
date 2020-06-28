@@ -30,6 +30,8 @@ public class BgThread2 extends Thread {
     private Connection conn = null;
     private Statement stmt = null;
     private String migrationFmt = null;
+    private String projection1 = null;
+    private String projection2 = null;
 
     public BgThread2(String name) {
         super(name); 
@@ -42,20 +44,31 @@ public class BgThread2 extends Thread {
     public synchronized void run() {
         if (DBWorkload.BACKGROUND_THREAD != null) {
             if (DBWorkload.BACKGROUND_THREAD.equals("projection") || DBWorkload.BACKGROUND_THREAD.equals("proj")) {
-                migrationFmt =                     
-                    " insert into customer_proj(" +
-                    " c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, " +
-                    " c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, " +
-                    " c_street_1, c_city, c_state, c_zip, c_data) " +
-                    " (select " +
-                    " c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, " +
-                    " c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, " +
-                    " c_street_1, c_city, c_state, c_zip, c_data " +
-                    " from customer " +
-                    " where c_w_id = {0,number,#} " +
-                    " and c_d_id = {1,number,#}) ";
+                projection1 = 
+                    " insert into customer_proj1(" +
+                    "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                    "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data) " +
+                    "(select " +
+                    "  c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_balance, " +
+                    "  c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data " +
+                    "from customer " +
+                    "where c_w_id = {0,number,#} " +
+                    "  and c_d_id = {1,number,#}) ";
+    
+                projection2 = 
+                    " insert into customer_proj2(" +
+                    "  c_w_id, c_d_id, c_id, c_last, c_first, " +
+                    "  c_street_1, c_city, c_state, c_zip) " +
+                    "(select " +
+                    "  c_w_id, c_d_id, c_id, c_last, c_first, " +
+                    "  c_street_1, c_city, c_state, c_zip " +
+                    "from customer " +
+                    "where c_w_id = {0,number,#} " +
+                    "  and c_d_id = {1,number,#}) ";
+
                 if (DBWorkload.IS_CONFLICT) {
-                    migrationFmt += " on conflict (c_w_id,c_d_id,c_id) do nothing;";
+                    projection1 += " on conflict (c_w_id,c_d_id,c_id) do nothing;";
+                    projection2 += " on conflict (c_w_id,c_d_id,c_id) do nothing;";
                 }
             }
             if (DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
@@ -128,9 +141,13 @@ public class BgThread2 extends Thread {
                     for (int c_w_id = 50; c_w_id > 25; c_w_id--) {
                         for (int c_d_id = 1; c_d_id <= 10; c_d_id++) {
                             // <= 3000 tuples will be migrated each time
-                            String migration = MessageFormat.format(migrationFmt, c_w_id, c_d_id);
+                            String migration = MessageFormat.format(projection1, c_w_id, c_d_id);
                             LOG.info(migration);
-                            stmt.executeUpdate(migration);
+                            stmt.addBatch(migration);
+                            migration = MessageFormat.format(projection2, c_w_id, c_d_id);
+                            LOG.info(migration);
+                            stmt.addBatch(migration);
+                            stmt.executeBatch();
                             Thread.sleep(100);
                             if (!flag) break;
                         }
