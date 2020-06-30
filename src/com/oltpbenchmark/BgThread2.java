@@ -136,8 +136,7 @@ public class BgThread2 extends Thread {
         try { 
             stmt = c.createStatement();
             if (DBWorkload.BACKGROUND_THREAD != null) {
-                if (DBWorkload.BACKGROUND_THREAD.equals("projection")  || DBWorkload.BACKGROUND_THREAD.equals("proj")
-                 || DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
+                if (DBWorkload.BACKGROUND_THREAD.equals("projection")  || DBWorkload.BACKGROUND_THREAD.equals("proj")) {
                     for (int c_w_id = 50; c_w_id > 25; c_w_id--) {
                         for (int c_d_id = 1; c_d_id <= 10; c_d_id++) {
                             // <= 3000 tuples will be migrated each time
@@ -148,7 +147,20 @@ public class BgThread2 extends Thread {
                             LOG.info(migration);
                             stmt.addBatch(migration);
                             stmt.executeBatch();
-                            Thread.sleep(100);
+                            Thread.sleep(300);
+                            if (!flag) break;
+                        }
+                        if (!flag) break;
+                    }
+                }
+                 if (DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
+                    for (int c_w_id = 50; c_w_id > 25; c_w_id--) {
+                        for (int c_d_id = 1; c_d_id <= 10; c_d_id++) {
+                            // <= 3000 tuples will be migrated each time
+                            String migration = MessageFormat.format(migrationFmt, c_w_id, c_d_id);
+                            LOG.info(migration);
+                            stmt.executeUpdate(migration);
+                            Thread.sleep(300);
                             if (!flag) break;
                         }
                         if (!flag) break;
