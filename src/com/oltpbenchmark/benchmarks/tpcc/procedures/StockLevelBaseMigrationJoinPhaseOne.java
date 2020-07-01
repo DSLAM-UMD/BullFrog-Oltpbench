@@ -67,7 +67,7 @@ public class StockLevelBaseMigrationJoinPhaseOne extends TPCCProcedure {
         // s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06,
         // s_dist_07, s_dist_08, s_dist_09, s_dist_10
         // from order_line, stock
-        // where ol_i_id = s_i_id);
+        // where ol_i_id = s_i_id) on conflict (ol_w_id,ol_d_id,ol_o_id,ol_number,s_w_id,s_i_id) do nothing;
 
     private PreparedStatement migration = null;
 
