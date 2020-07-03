@@ -51,7 +51,7 @@ public class BaseMigrationAggPhaseOne extends TPCCProcedure {
         // (select
         //     sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id
         // from order_line
-        // group by ol_o_id, ol_d_id, ol_w_id);
+        // group by ol_o_id, ol_d_id, ol_w_id) on conflict (ol_o_id, ol_d_id, ol_w_id) do nothing;
 
 
     public ResultSet run(Connection conn, Random gen,

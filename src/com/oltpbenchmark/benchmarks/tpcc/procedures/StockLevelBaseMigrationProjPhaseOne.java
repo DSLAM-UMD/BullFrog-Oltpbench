@@ -64,7 +64,7 @@ public class StockLevelBaseMigrationProjPhaseOne extends TPCCProcedure {
             //     (select
             //     c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first,
             //     c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_data
-            //     from customer); 
+            //     from customer) on conflict (c_w_id,c_d_id,c_id) do nothing; 
 
             // insert into customer_proj2(
             //     c_w_id, c_d_id, c_id, c_last, c_first,
@@ -72,7 +72,7 @@ public class StockLevelBaseMigrationProjPhaseOne extends TPCCProcedure {
             //     (select
             //     c_w_id, c_d_id, c_id, c_last, c_first,
             //     c_street_1, c_city, c_state, c_zip
-            //     from customer); 
+            //     from customer) on conflict (c_w_id,c_d_id,c_id) do nothing; 
 
     private Statement stmt = null;
 
