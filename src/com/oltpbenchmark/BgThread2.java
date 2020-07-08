@@ -82,17 +82,6 @@ public class BgThread2 extends Thread {
                     migrationFmt += " on conflict (ol_o_id, ol_d_id, ol_w_id) do nothing;";
                 }
             }
-            if (DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
-                migrationFmt =                     
-                    " insert into orderline_agg(" +
-                    " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +    
-                    " (select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
-                    " from order_line where ol_w_id = {0,number,#} and ol_d_id = {1,number,#}" + 
-                    " group by ol_o_id, ol_d_id, ol_w_id)";
-                if (DBWorkload.IS_CONFLICT) {
-                    migrationFmt += " on conflict (ol_o_id, ol_d_id, ol_w_id) do nothing;";
-                }
-            }
             if (DBWorkload.BACKGROUND_THREAD.equals("join")) {
                 migrationFmt =                     
                     "insert into orderline_stock(" +
