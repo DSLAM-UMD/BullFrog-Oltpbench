@@ -193,10 +193,6 @@ public class DBWorkload {
             LOG.fatal("Missing the backend database's port number");
             printUsage(options);
             return;
-        } else if (argsLine.hasOption("path") == false) {
-            LOG.fatal("Missing the backend database's binary path");
-            printUsage(options);
-            return;
         }
 
 
