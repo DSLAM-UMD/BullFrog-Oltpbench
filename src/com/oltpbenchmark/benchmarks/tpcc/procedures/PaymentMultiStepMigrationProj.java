@@ -291,9 +291,6 @@ public class PaymentMultiStepMigrationProj extends TPCCProcedure {
             payUpdateCustBalCdata2.setInt(7, c.c_id);
             result = payUpdateCustBalCdata2.executeUpdate();
 
-            if (result == 0)
-                throw new RuntimeException("Error in PYMNT Txn updating Customer C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID);
-
         } else { // GoodCredit
 
             payUpdateCustBal1.setDouble(1, c.c_balance);
@@ -314,9 +311,6 @@ public class PaymentMultiStepMigrationProj extends TPCCProcedure {
             payUpdateCustBal2.setInt(5, customerDistrictID);
             payUpdateCustBal2.setInt(6, c.c_id);
             result = payUpdateCustBal2.executeUpdate();
-
-            if (result == 0)
-                throw new RuntimeException("C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID + " not found!");
 
         }
 

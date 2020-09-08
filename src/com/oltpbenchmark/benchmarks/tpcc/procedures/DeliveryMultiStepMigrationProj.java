@@ -241,13 +241,6 @@ public class DeliveryMultiStepMigrationProj extends TPCCProcedure {
             result = delivUpdateCustBalDelivCnt1.executeUpdate();
             if (trace) LOG.trace("delivUpdateCustBalDelivCnt1 END");
 
-            if (result == 0) {
-                String msg = String.format("Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]",
-                                           w_id, d_id, c_id);
-                if (trace) LOG.warn(msg);
-                // throw new RuntimeException(msg);
-            }
-
             if (trace) LOG.trace("delivUpdateCustBalDelivCnt2 START");
             result = delivUpdateCustBalDelivCnt2.executeUpdate();
             if (trace) LOG.trace("delivUpdateCustBalDelivCnt2 END");
