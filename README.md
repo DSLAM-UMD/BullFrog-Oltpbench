@@ -1,7 +1,8 @@
 # BullFrog-OLTPBench
 
+## BullFrog
 
-## Compile and Install BullFrog
+### Compile and Install BullFrog
 
 ```shell
 git clone https://github.com/DSLAM-UMD/BullFrog
@@ -41,7 +42,7 @@ createdb -h localhost -p 5433 tpcc
 psql -h localhost -p 5433 tpcc -c "CREATE USER postgres WITH SUPERUSER PASSWORD 'postgres';"
 ```
 
-## Stop BullFrog
+### Stop BullFrog
 
 ```shell
 $ pg_ctl -D $PGDATA stop
@@ -51,4 +52,5 @@ $ pg_ctl -D $PGDATA status
 pg_ctl: no server running
 ```
 
+### Oltp-bench
 
