@@ -115,3 +115,17 @@ There are many conf files under [`config`](https://github.com/DSLAM-UMD/BullFrog
 
 </parameters
 ```
+
+### Load TPC-C Dataset
+
+Since data loading can be a lengthy process, one would first create a and populate a database which can be reused for multiple experiments:
+
+```shell
+./oltpbenchmark -b tpcc -c config/pgtpcc_config.xml --create=true --load=true
+```
+
+### Run TPC-C
+
+```shell
+./oltpbenchmark -b tpcc -c config/pg_tpcc_config.xml --execute=true -s 5 -o outputfile
+```
