@@ -36,6 +36,19 @@ pg_ctl -D $PGDATA status
 
 # create database: (we assume here that you used post number as 5433 above)
 createdb -h localhost -p 5433 tpcc
+
+# create role
+psql -h localhost -p 5433 tpcc -c "CREATE USER postgres WITH SUPERUSER PASSWORD 'postgres';"
+```
+
+## Stop BullFrog
+
+```shell
+$ pg_ctl -D $PGDATA stop
+waiting for server to shut down.... done
+server stopped
+$ pg_ctl -D $PGDATA status
+pg_ctl: no server running
 ```
 
 
