@@ -52,5 +52,64 @@ $ pg_ctl -D $PGDATA status
 pg_ctl: no server running
 ```
 
-### Oltp-bench
+## OLTP-BENCH
 
+### Build
+
+```shell
+git clone https://github.com/DSLAM-UMD/BullFrog-Oltpbench
+ant resolve
+ant build
+```
+
+### TPC-C configuration file
+
+```xml
+<?xml version="1.0"?>
+<parameters>
+    <dbtype>postgres</dbtype>
+    <driver>org.postgresql.Driver</driver>
+    <DBUrl>jdbc:postgresql://localhost:5433/tpcc</DBUrl>
+    <DBName>tpcc</DBName>
+    <username>postgres</username>
+    <password>postgres</password>
+    <terminals>10</terminals>
+    
+    <scalefactor>10</scalefactor>
+    <uploadCode></uploadCode>
+    <uploadUrl></uploadUrl>
+    
+   
+        <transactiontypes>
+        <transactiontype>
+                <name>NewOrder</name>
+                <id>1</id>
+        </transactiontype>
+        <transactiontype>
+                <name>Payment</name>
+                <id>2</id>
+        </transactiontype>
+        <transactiontype>
+                <name>OrderStatus</name>
+                <id>3</id>
+        </transactiontype>
+        <transactiontype>
+                <name>Delivery</name>
+                <id>4</id>
+        </transactiontype>
+        <transactiontype>
+                <name>StockLevel</name>
+                <id>5</id>
+        </transactiontype>
+        </transactiontypes>
+   
+    <works>
+        <work>
+          <time>20</time>
+          <rate>10</rate>
+          <weights>20,20,20,20,20</weights>
+        </work>
+        </works>
+
+</parameters
+```
