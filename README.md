@@ -34,9 +34,8 @@ initdb -D $PGDATA
 pg_ctl -D $PGDATA -o "-F -p 5433" start
 pg_ctl -D $PGDATA status
 
-# create database: (we assume here that you used post number as 5433
-above)
-$ createdb -h localhost -p 5433 tpcc
+# create database: (we assume here that you used post number as 5433 above)
+createdb -h localhost -p 5433 tpcc
 ```
 
 
