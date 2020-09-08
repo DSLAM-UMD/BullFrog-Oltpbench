@@ -38,13 +38,13 @@ public class BaseMigrationAggPhaseOne extends TPCCProcedure {
     private static final Logger LOG = Logger.getLogger(BaseMigrationAggPhaseOne.class);
     private static AtomicLong numRun = new AtomicLong(0);
 
-    private static final String migration =
+    public SQLStmt migrationSQL = new SQLStmt(
         "insert into orderline_agg(" +
         " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +
         " (select " +
         "  sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
         "  from order_line " +
-        "  group by ol_o_id, ol_d_id, ol_w_id); ";
+        "  group by ol_o_id, ol_d_id, ol_w_id);");
 
         // insert into orderline_agg(
         //     ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id)
@@ -53,6 +53,7 @@ public class BaseMigrationAggPhaseOne extends TPCCProcedure {
         // from order_line
         // group by ol_o_id, ol_d_id, ol_w_id) on conflict (ol_o_id, ol_d_id, ol_w_id) do nothing;
 
+    private PreparedStatement migration = null;
 
     public ResultSet run(Connection conn, Random gen,
             int w_id, int numWarehouses,
@@ -60,19 +61,16 @@ public class BaseMigrationAggPhaseOne extends TPCCProcedure {
             TPCCWorker w) throws SQLException {
 
         boolean trace = LOG.isTraceEnabled();
-        // migration txn
-        String[] command = {"/bin/sh", "-c",
-            "echo \"" + migration + "\" | " +
-            DBWorkload.DB_BINARY_PATH + "/psql -qS -1 -p " +
-            DBWorkload.DB_PORT_NUMBER + " tpcc"};
+
+        migration = this.getPreparedStatement(conn, migrationSQL);
 
         if (numRun.getAndIncrement() == 0) {
-            execCommands(command);
+            migration.executeUpdate();
         }
 
         if (trace) LOG.trace("[baseline] migration agg phase one - orderline_agg done!");
 
         conn.commit();
         return null;
-	 }
+	}
 }

@@ -61,7 +61,6 @@ public class DBWorkload {
     private static final String RATE_DISABLED = "disabled";
     private static final String RATE_UNLIMITED = "unlimited";
     public static String DB_PORT_NUMBER = "5432";
-    public static String DB_BINARY_PATH = "/home/gangliao/so-postgres/postgresql-11.0/dev/bin";
     public static int MIGRATION_TXN_ID = -1;
     public static boolean IS_MIGRATED = false;
     public static boolean IS_CONFLICT = false;
@@ -212,7 +211,6 @@ public class DBWorkload {
         // GET PLUGIN LIST
         // -------------------------------------------------------------------
         DB_PORT_NUMBER = argsLine.getOptionValue("port");
-        DB_BINARY_PATH = argsLine.getOptionValue("path");
         if (argsLine.hasOption("bgthread")) {
             BACKGROUND_THREAD = argsLine.getOptionValue("bgthread");
             LOG.info("background thread: " + BACKGROUND_THREAD);
