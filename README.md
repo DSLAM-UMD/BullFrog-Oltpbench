@@ -64,6 +64,8 @@ ant build
 
 ### TPC-C configuration file
 
+There are many conf files under [`config`](https://github.com/DSLAM-UMD/BullFrog-Oltpbench/tree/master/config) folder. You can pick any of them if it relates to TPC-C. 
+
 ```xml
 <?xml version="1.0"?>
 <parameters>
