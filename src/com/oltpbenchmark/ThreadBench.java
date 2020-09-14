@@ -29,6 +29,11 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import java.util.concurrent.atomic.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.collections15.map.ListOrderedMap;
 import org.apache.log4j.Logger;
 
@@ -44,7 +49,10 @@ import com.oltpbenchmark.util.StringUtil;
 public class ThreadBench implements Thread.UncaughtExceptionHandler {
     private static final Logger LOG = Logger.getLogger(ThreadBench.class);
 
-    
+    private static AtomicLong numExecutedTxns = new AtomicLong(0L);
+    private List<Double> throughputs = new ArrayList<>();
+    private Long prevThroughput = 0L;
+
     private static BenchmarkState testState;
     private final List<? extends Worker<? extends BenchmarkModule>> workers;
     private final ArrayList<Thread> workerThreads;
@@ -361,11 +369,22 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
         }
 
         // Add a background thread to find non-migrated tuples and migrate them
-        BgThread1 bgWorker1 = new BgThread1("A background thread for lazy migration"); 
+        BgThread1 bgWorker1 = new BgThread1("A background thread for lazy migration", this); 
         bgWorker1.start();
 
-        BgThread2 bgWorker2 = new BgThread2("A background thread for lazy migration"); 
+        BgThread2 bgWorker2 = new BgThread2("A background thread for lazy migration", this); 
         bgWorker2.start();
+
+        Runnable runnable = new Runnable() {
+            public void run() {
+                Long t = numExecutedTxns.get();
+                throughputs.add((t - prevThroughput) / 5.0);
+                prevThroughput = t;
+            }
+        };
+
+        // ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        // service.scheduleAtFixedRate(runnable, 0, 5, TimeUnit.SECONDS);
 
         // Main Loop
         while (true) {           
@@ -568,9 +587,19 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
             bgWorker2.stopRunning();
             bgWorker1.join();
             bgWorker2.join();
+
+            // dumpBgThroughput();
+
             return (results);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void dumpBgThroughput() {
+        int sec = 0;
+        for (Double t : throughputs) {
+            LOG.info("BG Threads - [" + sec + ", " + sec + 5 + "]: " + t);
         }
     }
 
@@ -809,4 +838,7 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
 
     }
 
+    public void increment() {
+        numExecutedTxns.getAndIncrement();
+    }
 }

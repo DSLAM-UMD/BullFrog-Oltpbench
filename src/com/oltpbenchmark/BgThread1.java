@@ -33,8 +33,11 @@ public class BgThread1 extends Thread {
     private String projection1 = null;
     private String projection2 = null;
 
-    public BgThread1(String name) {
-        super(name); 
+    private ThreadBench threadBench = null;
+
+    public BgThread1(String name, ThreadBench ben) {
+        super(name);
+        threadBench = ben;
     }
 
     public void stopRunning() {
@@ -136,6 +139,8 @@ public class BgThread1 extends Thread {
                             LOG.info(migration);
                             stmt.addBatch(migration);
                             stmt.executeBatch();
+                            threadBench.increment();
+                            threadBench.increment();
                             Thread.sleep(200);
                             if (!flag) break;
                         }
