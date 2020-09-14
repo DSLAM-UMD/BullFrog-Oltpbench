@@ -139,8 +139,8 @@ public class BgThread1 extends Thread {
                             LOG.info(migration);
                             stmt.addBatch(migration);
                             stmt.executeBatch();
-                            threadBench.increment();
-                            threadBench.increment();
+                            // threadBench.increment();
+                            // threadBench.increment();
                             Thread.sleep(200);
                             if (!flag) break;
                         }
