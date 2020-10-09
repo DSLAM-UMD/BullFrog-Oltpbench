@@ -48,7 +48,7 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
             "where c_w_id = {0,number,#} " +
             "  and c_d_id = {1,number,#} " +
 			"  and c_id >= {2,number,#} " +
-			"  add c_id <= {3,number,#})";
+			"  and c_id <= {3,number,#})";
 
     public String migrationSQL2 = 
             " insert into customer_proj2(" +
@@ -61,7 +61,7 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
             "where c_w_id = {0,number,#} " +
             "  and c_d_id = {1,number,#} " +
 			"  and c_id >= {2,number,#} " +
-			"  add c_id <= {3,number,#})";
+			"  and c_id <= {3,number,#})";
 
 	public final SQLStmt stmtGetCustSQL = new SQLStmt(
 			"SELECT C_DISCOUNT, C_LAST, C_CREDIT" +
