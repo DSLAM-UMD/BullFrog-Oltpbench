@@ -16,7 +16,7 @@
 
         <transactiontypes>
         <transactiontype>
-                <name>NewOrderLazyMigrationProj</name>
+                <name>NewOrderLazyMigrationProjPageLevel</name>
                 <id>1</id>
         </transactiontype>
         <transactiontype>
