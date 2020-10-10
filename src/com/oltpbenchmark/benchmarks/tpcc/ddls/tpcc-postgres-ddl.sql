@@ -237,6 +237,14 @@ CREATE TABLE customer_proj1 (
   PRIMARY KEY (c_w_id,c_d_id,c_id)
 );
 
+-- ALTER TABLE customer_proj1 
+-- ADD CONSTRAINT wid_check
+-- CHECK (
+-- 	c_w_id == 1
+-- 	AND c_d_id >= 1
+-- 	AND c_d_id <= 5
+-- );
+
 -- projection migration
 DROP TABLE IF EXISTS customer_proj2 CASCADE;
 CREATE TABLE customer_proj2 (
@@ -252,6 +260,14 @@ CREATE TABLE customer_proj2 (
   c_zip char(9) NOT NULL,
   PRIMARY KEY (c_w_id,c_d_id,c_id)
 );
+
+-- ALTER TABLE customer_proj2 
+-- ADD CONSTRAINT wid_check
+-- CHECK (
+-- 	c_w_id == 1
+-- 	AND c_d_id >= 1
+-- 	AND c_d_id <= 5
+-- );
 
 CREATE INDEX idx_customer_name1 ON customer_proj1 (c_w_id,c_d_id,c_last,c_first);
 CREATE INDEX idx_customer_name2 ON customer_proj2 (c_w_id,c_d_id,c_last,c_first);
