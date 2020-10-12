@@ -152,7 +152,8 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
                 "from customer " +
                 "where c_w_id = {0,number,#} " +
                 "  and c_d_id = {1,number,#} " +
-                "  and c_id = {2,number,#}) " +
+				"  and c_id >= {2,number,#} " +
+				"  and c_id <= {3,number,#})" +
                 "on conflict (c_w_id,c_d_id,c_id) do nothing;";
             migrationSQL2 = 
                 " insert into customer_proj2(" +
@@ -164,7 +165,8 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
                 "from customer " +
                 "where c_w_id = {0,number,#} " +
                 "  and c_d_id = {1,number,#} " +
-                "  and c_id = {2,number,#}) " +
+				"  and c_id >= {2,number,#} " +
+				"  and c_id <= {3,number,#})" +
                 "on conflict (c_w_id,c_d_id,c_id) do nothing;";
 		}
 
@@ -279,10 +281,12 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
 		try {
 			if (!DBWorkload.IS_CONFLICT)
 				conn.setAutoCommit(false);
+			int page = 64;
+			// if page size is 300
 			// 0 - 9: [1, 300], [301, 600], [601, 900], ...
-			int interval_id = (c_id - 1) / 300;
-			int c_lower_id = interval_id * 300 + 1;
-			int c_upper_id = (interval_id + 1) * 300;
+			int interval_id = (c_id - 1) / page;
+			int c_lower_id = interval_id * page + 1;
+			int c_upper_id = (interval_id + 1) * page;
             stmt.addBatch(MessageFormat.format(migrationSQL1, w_id, d_id, c_lower_id, c_upper_id));
             stmt.addBatch(MessageFormat.format(migrationSQL2, w_id, d_id, c_lower_id, c_upper_id));
             stmt.executeBatch();
