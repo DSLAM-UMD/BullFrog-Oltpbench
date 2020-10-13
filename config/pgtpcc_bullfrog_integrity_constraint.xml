@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<parameters>
+    <dbtype>postgres</dbtype>
+    <driver>org.postgresql.Driver</driver>
+    <DBUrl>jdbc:postgresql://localhost:5433/tpcc</DBUrl>
+    <DBName>tpcc</DBName>
+    <username>postgres</username>
+    <password>postgres</password>
+    <isolation>TRANSACTION_SERIALIZABLE</isolation>
+    <terminals>8</terminals>
+
+    <scalefactor>50</scalefactor>
+    <uploadCode></uploadCode>
+    <uploadUrl></uploadUrl>
+
+
+        <transactiontypes>
+        <transactiontype>
+                <name>NewOrderLazyMigrationProjConstraints</name>
+                <id>1</id>
+        </transactiontype>
+        <transactiontype>
+                <name>PaymentLazyMigrationProjConstraint</name>
+                <id>2</id>
+        </transactiontype>
+        <transactiontype>
+                <name>OrderStatusLazyMigrationProj</name>
+                <id>3</id>
+        </transactiontype>
+        <transactiontype>
+                <name>DeliveryLazyMigrationProj</name>
+                <id>4</id>
+        </transactiontype>
+        <transactiontype>
+                <name>StockLevelLazyMigrationProjConstraint</name>
+                <id>5</id>
+        </transactiontype>
+        </transactiontypes>
+
+    <works>
+        <work>
+          <time>60</time>
+          <rate>700</rate>
+          <arrival>POISSON</arrival>
+          <weights>44, 43, 4, 4, 4</weights>
+        </work>
+        </works>
+
+</parameters>
