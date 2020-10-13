@@ -91,7 +91,8 @@ public class StockLevelLazyMigrationProjConstraint extends TPCCProcedure {
          }
 
 	     stockGetDistOrderId = this.getPreparedStatement(conn, stockGetDistOrderIdSQL);
-	     stockGetCountStock= this.getPreparedStatement(conn, stockGetCountStockSQL);
+         stockGetCountStock = this.getPreparedStatement(conn, stockGetCountStockSQL);
+         stmt = conn.createStatement();
 
 	     int threshold = TPCCUtil.randomNumber(10, 20, gen);
 	     int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
