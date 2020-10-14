@@ -59,7 +59,9 @@ public class PaymentLazyMigrationProjConstraint extends TPCCProcedure {
             "  d_name, d_street_1, d_street_2, d_city, d_state, d_zip " +
             "from district " +
             "where d_w_id = {0,number,#} " +
-            "  and d_id = {1,number,#});";
+            // "  and d_id = {1,number,#});";
+            "  and d_id = {1,number,#}) " +
+            "on conflict (d_w_id,d_id) do nothing;";
 
     public SQLStmt payUpdateDistSQL = new SQLStmt(
             "UPDATE district1" + 
@@ -96,6 +98,32 @@ public class PaymentLazyMigrationProjConstraint extends TPCCProcedure {
             "where c_w_id = {0,number,#} " +
             "  and c_d_id = {1,number,#} " +
             "  and c_id = {2,number,#});";
+
+    public String migrationSQL3 = 
+            " insert into district1(" +
+            "  d_w_id, d_id, d_ytd, d_tax, d_next_o_id, " +
+            "  d_name, d_street_1, d_street_2, d_city, d_state, d_zip) " +
+            "(select " +
+            "  d_w_id, d_id, d_ytd, d_tax, d_next_o_id, " +
+            "  d_name, d_street_1, d_street_2, d_city, d_state, d_zip " +
+            "from district " +
+            "where d_w_id = {0,number,#} " +
+			// "  and d_id = {1,number,#});";
+			"  and d_id = {1,number,#}) " +
+			"on conflict (d_w_id,d_id) do nothing;";
+
+	public String migrationSQL4 = 
+            " insert into oorder1(" +
+            "  o_w_id, o_d_id, o_c_id, o_id, " +
+            "  o_carrier_id, o_ol_cnt, o_all_local, o_entry_d) " +
+            "(select " +
+            "  o_w_id, o_d_id, o_c_id, o_id, " +
+            "  o_carrier_id, o_ol_cnt, o_all_local, o_entry_d " +
+            "from oorder " +
+            "where o_w_id = {0,number,#} " +
+            "  and o_d_id = {1,number,#} " +
+            "  and o_c_id = {2,number,#}) " +
+            "on conflict (o_w_id,o_d_id,o_id) do nothing;";
 
     public String payGetCustSQL3 = 
 	        "SELECT p1.C_FIRST, p1.C_LAST, C_STREET_1, " +
@@ -415,6 +443,8 @@ public class PaymentLazyMigrationProjConstraint extends TPCCProcedure {
                 conn.setAutoCommit(false);
             stmt.addBatch(MessageFormat.format(payGetCustSQL1, customerWarehouseID, customerDistrictID, customerID));
             stmt.addBatch(MessageFormat.format(payGetCustSQL2, customerWarehouseID, customerDistrictID, customerID));
+            stmt.addBatch(MessageFormat.format(migrationSQL3, customerWarehouseID, customerDistrictID));
+            stmt.addBatch(MessageFormat.format(migrationSQL4, customerWarehouseID, customerDistrictID, customerID));
             stmt.executeBatch();
             if (!DBWorkload.IS_CONFLICT)
                 conn.commit();            

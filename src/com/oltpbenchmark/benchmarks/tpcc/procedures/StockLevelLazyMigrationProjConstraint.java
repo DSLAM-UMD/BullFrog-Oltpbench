@@ -45,7 +45,9 @@ public class StockLevelLazyMigrationProjConstraint extends TPCCProcedure {
             "  d_name, d_street_1, d_street_2, d_city, d_state, d_zip " +
             "from district " +
             "where d_w_id = {0,number,#} " +
-            "  and d_id = {1,number,#});";
+            // "  and d_id = {1,number,#});";
+			"  and d_id = {1,number,#}) " +
+			"on conflict (d_w_id,d_id) do nothing;";
 
 	public SQLStmt stockGetDistOrderIdSQL = new SQLStmt(
 	        "SELECT D_NEXT_O_ID " + 
