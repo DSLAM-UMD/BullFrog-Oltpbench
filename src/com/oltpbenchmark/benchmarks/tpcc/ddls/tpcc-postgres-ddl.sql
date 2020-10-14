@@ -240,7 +240,7 @@ CREATE TABLE customer_proj1 (
 -- ALTER TABLE customer_proj1 
 -- ADD CONSTRAINT wid_check
 -- CHECK (
--- 	c_w_id == 1
+-- 	c_w_id = 1
 -- 	AND c_d_id >= 1
 -- 	AND c_d_id <= 5
 -- );
@@ -264,10 +264,41 @@ CREATE TABLE customer_proj2 (
 -- ALTER TABLE customer_proj2 
 -- ADD CONSTRAINT wid_check
 -- CHECK (
--- 	c_w_id == 1
+-- 	c_w_id = 1
 -- 	AND c_d_id >= 1
 -- 	AND c_d_id <= 5
 -- );
+
+DROP TABLE IF EXISTS district1 CASCADE;
+CREATE TABLE district1 (
+  d_w_id int NOT NULL,
+  d_id int NOT NULL,
+  d_ytd decimal(12,2) NOT NULL,
+  d_tax decimal(4,4) NOT NULL,
+  d_next_o_id int NOT NULL,
+  d_name varchar(10) NOT NULL,
+  d_street_1 varchar(20) NOT NULL,
+  d_street_2 varchar(20) NOT NULL,
+  d_city varchar(20) NOT NULL,
+  d_state char(2) NOT NULL,
+  d_zip char(9) NOT NULL,
+  PRIMARY KEY (d_w_id,d_id)
+);
+
+DROP TABLE IF EXISTS oorder1 CASCADE;
+CREATE TABLE oorder1 (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int DEFAULT NULL,
+  o_ol_cnt decimal(2,0) NOT NULL,
+  o_all_local decimal(1,0) NOT NULL,
+  o_entry_d timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  UNIQUE (o_w_id,o_d_id,o_c_id,o_id)
+);
+CREATE INDEX idx_order1 ON oorder1 (o_w_id,o_d_id,o_c_id,o_id);
 
 CREATE INDEX idx_customer_name1 ON customer_proj1 (c_w_id,c_d_id,c_last,c_first);
 CREATE INDEX idx_customer_name2 ON customer_proj2 (c_w_id,c_d_id,c_last,c_first);
