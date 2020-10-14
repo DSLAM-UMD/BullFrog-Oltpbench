@@ -24,11 +24,11 @@
                 <id>2</id>
         </transactiontype>
         <transactiontype>
-                <name>OrderStatusLazyMigrationProj</name>
+                <name>OrderStatusLazyMigrationProjConstraints</name>
                 <id>3</id>
         </transactiontype>
         <transactiontype>
-                <name>DeliveryLazyMigrationProj</name>
+                <name>DeliveryLazyMigrationProjConstraints</name>
                 <id>4</id>
         </transactiontype>
         <transactiontype>
@@ -42,7 +42,8 @@
           <time>60</time>
           <rate>700</rate>
           <arrival>POISSON</arrival>
-          <weights>44, 43, 4, 4, 4</weights>
+          <weights>45, 43, 4, 4, 4</weights>
+          <!-- <weights>0, 88, 4, 4, 4</weights> -->
         </work>
         </works>
 
