@@ -2,13 +2,13 @@
 <parameters>
     <dbtype>postgres</dbtype>
     <driver>org.postgresql.Driver</driver>
-    <DBUrl>jdbc:postgresql://localhost:5435/tpcc</DBUrl>
+    <DBUrl>jdbc:postgresql://localhost:5433/tpcc</DBUrl>
     <DBName>tpcc</DBName>
     <username>postgres</username>
     <password>postgres</password>
-    <terminals>10</terminals>
+    <terminals>8</terminals>
     
-    <scalefactor>1</scalefactor>
+    <scalefactor>50</scalefactor>
     <uploadCode></uploadCode>
     <uploadUrl></uploadUrl>
     
