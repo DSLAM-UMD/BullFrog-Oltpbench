@@ -119,7 +119,13 @@ public class NewOrderLazyMigrationProjConstraints extends TPCCProcedure {
 	public final SQLStmt  stmtInsertOOrderSQL = new SQLStmt(
 	        "INSERT INTO oorder1" +  
 	        " (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_OL_CNT, O_ALL_LOCAL)" + 
-            " VALUES (?, ?, ?, ?, ?, ?, ?)");
+			" VALUES (?, ?, ?, ?, ?, ?, ?)");
+			
+
+	public final SQLStmt  stmtInsertOOrderSQL1 = new SQLStmt(
+			"INSERT INTO oorder" +  
+			" (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_OL_CNT, O_ALL_LOCAL)" + 
+			" VALUES (?, ?, ?, ?, ?, ?, ?)");
 
 	public final SQLStmt  stmtGetItemSQL = new SQLStmt(
 	        "SELECT I_PRICE, I_NAME , I_DATA " +
@@ -155,6 +161,7 @@ public class NewOrderLazyMigrationProjConstraints extends TPCCProcedure {
 	private PreparedStatement stmtInsertNewOrder = null;
 	private PreparedStatement stmtUpdateDist = null;
 	private PreparedStatement stmtInsertOOrder = null;
+	private PreparedStatement stmtInsertOOrder1 = null;
 	private PreparedStatement stmtGetItem = null;
 	private PreparedStatement stmtGetStock = null;
 	private PreparedStatement stmtUpdateStock = null;
@@ -213,6 +220,7 @@ public class NewOrderLazyMigrationProjConstraints extends TPCCProcedure {
 		stmtInsertNewOrder=this.getPreparedStatement(conn, stmtInsertNewOrderSQL);
 		stmtUpdateDist =this.getPreparedStatement(conn, stmtUpdateDistSQL);
 		stmtInsertOOrder =this.getPreparedStatement(conn, stmtInsertOOrderSQL);
+		stmtInsertOOrder1 =this.getPreparedStatement(conn, stmtInsertOOrderSQL1);
 		stmtGetItem =this.getPreparedStatement(conn, stmtGetItemSQL);
 		stmtGetStock =this.getPreparedStatement(conn, stmtGetStockSQL);
 		stmtUpdateStock =this.getPreparedStatement(conn, stmtUpdateStockSQL);
@@ -380,6 +388,15 @@ public class NewOrderLazyMigrationProjConstraints extends TPCCProcedure {
 			stmtInsertOOrder.setInt(6, o_ol_cnt);
 			stmtInsertOOrder.setInt(7, o_all_local);
 			stmtInsertOOrder.executeUpdate();
+
+			stmtInsertOOrder1.setInt(1, o_id);
+			stmtInsertOOrder1.setInt(2, d_id);
+			stmtInsertOOrder1.setInt(3, w_id);
+			stmtInsertOOrder1.setInt(4, c_id);
+			stmtInsertOOrder1.setTimestamp(5, w.getBenchmarkModule().getTimestamp(System.currentTimeMillis()));
+			stmtInsertOOrder1.setInt(6, o_ol_cnt);
+			stmtInsertOOrder1.setInt(7, o_all_local);
+			stmtInsertOOrder1.executeUpdate();
 			//insert ooder first]]
 			/*TODO: add error checking */
 
