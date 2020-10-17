@@ -32,6 +32,8 @@ public class BgThread1 extends Thread {
     private String migrationFmt = null;
     private String projection1 = null;
     private String projection2 = null;
+    private String projection3 = null;
+    private String projection4 = null;
 
     private ThreadBench threadBench = null;
 
@@ -68,6 +70,30 @@ public class BgThread1 extends Thread {
                     "from customer " +
                     "where c_w_id = {0,number,#} " +
                     "  and c_d_id = {1,number,#}) ";
+
+                // projection3 =
+                //     " insert into district1(" +
+                //     "  d_w_id, d_id, d_ytd, d_tax, d_next_o_id, " +
+                //     "  d_name, d_street_1, d_street_2, d_city, d_state, d_zip) " +
+                //     "(select " +
+                //     "  d_w_id, d_id, d_ytd, d_tax, d_next_o_id, " +
+                //     "  d_name, d_street_1, d_street_2, d_city, d_state, d_zip " +
+                //     "from district " +
+                //     "where d_w_id = {0,number,#} " +
+                //     "  and d_id = {1,number,#}) " +
+                //     "on conflict (d_w_id,d_id) do nothing;";
+
+                // projection4 =
+                //     " insert into oorder1(" +
+                //     "  o_w_id, o_d_id, o_c_id, o_id, " +
+                //     "  o_carrier_id, o_ol_cnt, o_all_local, o_entry_d) " +
+                //     "(select " +
+                //     "  o_w_id, o_d_id, o_c_id, o_id, " +
+                //     "  o_carrier_id, o_ol_cnt, o_all_local, o_entry_d " +
+                //     "from oorder " +
+                //     "where o_w_id = {0,number,#} " +
+                //     "  and o_d_id = {1,number,#}) " +
+                //     "on conflict (o_w_id,o_d_id,o_id) do nothing;";
 
                 if (DBWorkload.IS_CONFLICT) {
                     projection1 += " on conflict (c_w_id,c_d_id,c_id) do nothing;";
@@ -138,6 +164,12 @@ public class BgThread1 extends Thread {
                             migration = MessageFormat.format(projection2, c_w_id, c_d_id);
                             LOG.info(migration);
                             stmt.addBatch(migration);
+                            // migration = MessageFormat.format(projection3, c_w_id, c_d_id);
+                            // LOG.info(migration);
+                            // stmt.addBatch(migration);
+                            // migration = MessageFormat.format(projection4, c_w_id, c_d_id);
+                            // LOG.info(migration);
+                            // stmt.addBatch(migration);
                             stmt.executeBatch();
                             // threadBench.increment();
                             // threadBench.increment();
