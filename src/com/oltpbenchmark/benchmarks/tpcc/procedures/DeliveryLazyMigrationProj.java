@@ -168,6 +168,10 @@ public class DeliveryLazyMigrationProj extends TPCCProcedure {
 		int d_id, c_id;
         float ol_total = 0;
         int[] orderIDs;
+        
+        // w_id = 50;
+        // terminalDistrictLowerID = 1;
+        // terminalDistrictUpperID = 5;
 
         orderIDs = new int[10];
         for (d_id = 1; d_id <= terminalDistrictUpperID; d_id++) {

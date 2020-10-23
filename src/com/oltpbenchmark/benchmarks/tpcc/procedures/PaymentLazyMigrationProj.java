@@ -232,7 +232,9 @@ public class PaymentLazyMigrationProj extends TPCCProcedure {
         stmt = conn.createStatement();
 
         // payUpdateWhse =this.getPreparedStatement(conn, payUpdateWhseSQL);
-
+        // w_id = 50;
+        // terminalDistrictLowerID = 1;
+        // terminalDistrictUpperID = 5;
         int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
         int customerID = TPCCUtil.getCustomerID(gen);
 

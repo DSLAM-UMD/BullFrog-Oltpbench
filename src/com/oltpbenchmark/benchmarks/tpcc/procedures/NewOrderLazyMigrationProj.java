@@ -180,8 +180,8 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		stmtInsertOrderLine =this.getPreparedStatement(conn, stmtInsertOrderLineSQL);
 		stmt = conn.createStatement();
 
-        // terminalDistrictLowerID = 1;
-        // terminalDistrictUpperID = 1;
+    //    terminalDistrictLowerID = 1;
+    //    terminalDistrictUpperID = 5;
 		int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
 		int customerID = TPCCUtil.getCustomerID(gen);
 
@@ -225,7 +225,7 @@ public class NewOrderLazyMigrationProj extends TPCCProcedure {
 		int[] supplierWarehouseIDs = new int[numItems];
 		int[] orderQuantities = new int[numItems];
 		int allLocal = 1;
-		// terminalWarehouseID = 1;
+		// terminalWarehouseID = 50;
 		for (int i = 0; i < numItems; i++) {
 			itemIDs[i] = TPCCUtil.getItemID(gen);
 			if (TPCCUtil.randomNumber(1, 100, gen) > 1) {

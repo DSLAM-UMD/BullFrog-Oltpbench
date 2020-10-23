@@ -188,6 +188,9 @@ public class OrderStatusLazyMigrationProj extends TPCCProcedure {
         ordStatGetOrderLines = this.getPreparedStatement(conn, ordStatGetOrderLinesSQL);
         stmt = conn.createStatement();
 
+        // w_id = 50;
+        // terminalDistrictLowerID = 1;
+        // terminalDistrictUpperID = 5;
         int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
         boolean c_by_name = false;
         int y = TPCCUtil.randomNumber(1, 100, gen);
