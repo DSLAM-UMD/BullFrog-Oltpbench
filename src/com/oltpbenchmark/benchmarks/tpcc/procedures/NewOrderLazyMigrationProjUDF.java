@@ -289,6 +289,7 @@ public class NewOrderLazyMigrationProjUDF extends TPCCProcedure {
 			upperProc.setInt(3, d_id);
 			upperProc.setInt(4, c_id);
 			upperProc.setInt(5, w.getId());
+			upperProc.execute();
 
 			upperProc = conn.prepareCall("{ ? = call customer_proj2_q1( ?, ?, ?, ? ) }");
 			upperProc.registerOutParameter(1, java.sql.Types.INTEGER);
@@ -296,6 +297,8 @@ public class NewOrderLazyMigrationProjUDF extends TPCCProcedure {
 			upperProc.setInt(3, d_id);
 			upperProc.setInt(4, c_id);
 			upperProc.setInt(5, w.getId());
+			upperProc.execute();
+			upperProc.close();
 
 			stmtGetCust.setInt(1, w_id);
 			stmtGetCust.setInt(2, d_id);
