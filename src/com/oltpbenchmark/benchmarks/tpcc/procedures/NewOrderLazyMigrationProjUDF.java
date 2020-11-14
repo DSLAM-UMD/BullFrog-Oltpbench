@@ -134,6 +134,7 @@ public class NewOrderLazyMigrationProjUDF extends TPCCProcedure {
 	private PreparedStatement stmtUpdateStock = null;
 	private PreparedStatement stmtInsertOrderLine = null;
 	private Statement stmt = null;
+	private CallableStatement upperProc = null;
 
     public ResultSet run(Connection conn, Random gen,
 			int terminalWarehouseID, int numWarehouses,
@@ -283,7 +284,7 @@ public class NewOrderLazyMigrationProjUDF extends TPCCProcedure {
             // stmt.executeBatch();
 			// if (!DBWorkload.IS_CONFLICT)
 			// 	conn.commit();
-			CallableStatement upperProc = conn.prepareCall("{ ? = call customer_proj1_q1( ?, ?, ?, ? ) }");
+			upperProc = conn.prepareCall("{ ? = call customer_proj_q1( ?, ?, ?, ? ) }");
 			upperProc.registerOutParameter(1, java.sql.Types.INTEGER);
 			upperProc.setInt(2, w_id);
 			upperProc.setInt(3, d_id);
@@ -291,14 +292,14 @@ public class NewOrderLazyMigrationProjUDF extends TPCCProcedure {
 			upperProc.setInt(5, w.getId());
 			upperProc.execute();
 
-			upperProc = conn.prepareCall("{ ? = call customer_proj2_q1( ?, ?, ?, ? ) }");
-			upperProc.registerOutParameter(1, java.sql.Types.INTEGER);
-			upperProc.setInt(2, w_id);
-			upperProc.setInt(3, d_id);
-			upperProc.setInt(4, c_id);
-			upperProc.setInt(5, w.getId());
-			upperProc.execute();
-			upperProc.close();
+			// upperProc = conn.prepareCall("{ ? = call customer_proj2_q1( ?, ?, ?, ? ) }");
+			// upperProc.registerOutParameter(1, java.sql.Types.INTEGER);
+			// upperProc.setInt(2, w_id);
+			// upperProc.setInt(3, d_id);
+			// upperProc.setInt(4, c_id);
+			// upperProc.setInt(5, w.getId());
+			// upperProc.addBatch();
+			// upperProc.executeBatch();
 
 			stmtGetCust.setInt(1, w_id);
 			stmtGetCust.setInt(2, d_id);
@@ -520,6 +521,7 @@ public class NewOrderLazyMigrationProjUDF extends TPCCProcedure {
               if (stmtUpdateStock != null)
 				stmtUpdateStock.clearBatch();
 			if (stmt != null) { stmt.close(); }
+			upperProc.close();
         }
 
 	}
