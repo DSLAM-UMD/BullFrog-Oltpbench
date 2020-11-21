@@ -18,6 +18,7 @@ package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.CallableStatement;
 import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,9 +34,9 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 
-public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
+public class NewOrderLazyMigrationProjPageLevelUDF extends TPCCProcedure {
 
-    private static final Logger LOG = Logger.getLogger(NewOrderLazyMigrationProj.class);
+    private static final Logger LOG = Logger.getLogger(NewOrderLazyMigrationProjPageLevelUDF.class);
 
     public String migrationSQL1 = 
             " insert into customer_proj1(" +
@@ -135,6 +136,7 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
 	private PreparedStatement stmtUpdateStock = null;
 	private PreparedStatement stmtInsertOrderLine = null;
 	private Statement stmt = null;
+	private CallableStatement upperProc = null;
 
     public ResultSet run(Connection conn, Random gen,
 			int terminalWarehouseID, int numWarehouses,
@@ -184,10 +186,11 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
 		stmtInsertOrderLine =this.getPreparedStatement(conn, stmtInsertOrderLineSQL);
 		stmt = conn.createStatement();
 
-        terminalDistrictLowerID = 1;
-        terminalDistrictUpperID = 1;
+        // terminalDistrictLowerID = 1;
+        // terminalDistrictUpperID = 1;
 		int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
-		int customerID = TPCCUtil.getCustomerID(gen);
+		// int customerID = TPCCUtil.getCustomerID(gen);
+		int customerID = TPCCUtil.randomNumber(1,6, gen); 
 
         // Reviewer 3 wants to know about the total overhead of maintaining the data structures
         // run an experiment where the query workload is such that every tuple in the old schema
@@ -229,7 +232,7 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
 		int[] supplierWarehouseIDs = new int[numItems];
 		int[] orderQuantities = new int[numItems];
 		int allLocal = 1;
-		terminalWarehouseID = 1;
+		// terminalWarehouseID = 50;
 		for (int i = 0; i < numItems; i++) {
 			itemIDs[i] = TPCCUtil.getItemID(gen);
 			if (TPCCUtil.randomNumber(1, 100, gen) > 1) {
@@ -279,19 +282,27 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
 		float ol_amount, total_amount = 0;
 		
 		try {
-			if (!DBWorkload.IS_CONFLICT)
-				conn.setAutoCommit(false);
-			int page = 1;
+			// if (!DBWorkload.IS_CONFLICT)
+				// conn.setAutoCommit(false);
+			int page = 256;
 			// if page size is 300
 			// 0 - 9: [1, 300], [301, 600], [601, 900], ...
 			int interval_id = (c_id - 1) / page;
 			int c_lower_id = interval_id * page + 1;
 			int c_upper_id = (interval_id + 1) * page;
-            stmt.addBatch(MessageFormat.format(migrationSQL1, w_id, d_id, c_lower_id, c_upper_id));
-            stmt.addBatch(MessageFormat.format(migrationSQL2, w_id, d_id, c_lower_id, c_upper_id));
-            stmt.executeBatch();
-			if (!DBWorkload.IS_CONFLICT)
-				conn.commit();
+            // stmt.addBatch(MessageFormat.format(migrationSQL1, w_id, d_id, c_lower_id, c_upper_id));
+            // stmt.addBatch(MessageFormat.format(migrationSQL2, w_id, d_id, c_lower_id, c_upper_id));
+            // stmt.executeBatch();
+			// if (!DBWorkload.IS_CONFLICT)
+			// 	conn.commit();
+			upperProc = conn.prepareCall("{ ? = call customer_proj_page( ?, ?, ?, ?, ? ) }");
+			upperProc.registerOutParameter(1, java.sql.Types.INTEGER);
+			upperProc.setInt(2, w_id);
+			upperProc.setInt(3, d_id);
+			upperProc.setInt(4, c_lower_id);
+			upperProc.setInt(5, c_upper_id);
+			upperProc.setInt(6, w.getId());
+			upperProc.execute();
 
 			stmtGetCust.setInt(1, w_id);
 			stmtGetCust.setInt(2, d_id);
@@ -513,6 +524,7 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
               if (stmtUpdateStock != null)
 				stmtUpdateStock.clearBatch();
 			if (stmt != null) { stmt.close(); }
+			upperProc.close();
         }
 
 	}
