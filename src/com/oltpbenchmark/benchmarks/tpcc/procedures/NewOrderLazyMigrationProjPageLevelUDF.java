@@ -187,10 +187,10 @@ public class NewOrderLazyMigrationProjPageLevelUDF extends TPCCProcedure {
 		stmt = conn.createStatement();
 
         // terminalDistrictLowerID = 1;
-        // terminalDistrictUpperID = 1;
+        // terminalDistrictUpperID = 5;
 		int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
-		// int customerID = TPCCUtil.getCustomerID(gen);
-		int customerID = TPCCUtil.randomNumber(1,6, gen); 
+		int customerID = TPCCUtil.getCustomerID(gen);
+		// int customerID = TPCCUtil.randomNumber(1,6, gen); 
 
         // Reviewer 3 wants to know about the total overhead of maintaining the data structures
         // run an experiment where the query workload is such that every tuple in the old schema

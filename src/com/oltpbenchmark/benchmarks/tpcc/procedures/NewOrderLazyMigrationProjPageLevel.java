@@ -184,10 +184,11 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
 		stmtInsertOrderLine =this.getPreparedStatement(conn, stmtInsertOrderLineSQL);
 		stmt = conn.createStatement();
 
-        terminalDistrictLowerID = 1;
-        terminalDistrictUpperID = 1;
+        // terminalDistrictLowerID = 1;
+        // terminalDistrictUpperID = 5;
 		int districtID = TPCCUtil.randomNumber(terminalDistrictLowerID,terminalDistrictUpperID, gen);
 		int customerID = TPCCUtil.getCustomerID(gen);
+		// int customerID = TPCCUtil.randomNumber(1, 30, gen);
 
         // Reviewer 3 wants to know about the total overhead of maintaining the data structures
         // run an experiment where the query workload is such that every tuple in the old schema
@@ -229,7 +230,8 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
 		int[] supplierWarehouseIDs = new int[numItems];
 		int[] orderQuantities = new int[numItems];
 		int allLocal = 1;
-		terminalWarehouseID = 1;
+		// terminalWarehouseID = 25;
+		// terminalWarehouseID = TPCCUtil.randomNumber(1, 50, gen);
 		for (int i = 0; i < numItems; i++) {
 			itemIDs[i] = TPCCUtil.getItemID(gen);
 			if (TPCCUtil.randomNumber(1, 100, gen) > 1) {
@@ -281,7 +283,7 @@ public class NewOrderLazyMigrationProjPageLevel extends TPCCProcedure {
 		try {
 			if (!DBWorkload.IS_CONFLICT)
 				conn.setAutoCommit(false);
-			int page = 1;
+			int page = 256;
 			// if page size is 300
 			// 0 - 9: [1, 300], [301, 600], [601, 900], ...
 			int interval_id = (c_id - 1) / page;

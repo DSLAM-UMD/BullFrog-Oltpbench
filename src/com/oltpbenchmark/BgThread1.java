@@ -18,6 +18,7 @@ import java.io.BufferedOutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.sql.CallableStatement;
 import java.sql.SQLException;
 
 import com.oltpbenchmark.DBWorkload;
@@ -29,6 +30,7 @@ public class BgThread1 extends Thread {
 
     private Connection conn = null;
     private Statement stmt = null;
+    private CallableStatement upperProc = null;
     private String migrationFmt = null;
     private String projection1 = null;
     private String projection2 = null;
@@ -157,24 +159,41 @@ public class BgThread1 extends Thread {
                 if (DBWorkload.BACKGROUND_THREAD.equals("projection")  || DBWorkload.BACKGROUND_THREAD.equals("proj")) {
                     for (int c_w_id = 1; c_w_id <= 25; c_w_id++) {
                         for (int c_d_id = 1; c_d_id <= 10; c_d_id++) {
-                            // <= 3000 tuples will be migrated each time
-                            String migration = MessageFormat.format(projection1, c_w_id, c_d_id);
-                            LOG.info(migration);
-                            stmt.addBatch(migration);
-                            migration = MessageFormat.format(projection2, c_w_id, c_d_id);
-                            LOG.info(migration);
-                            stmt.addBatch(migration);
-                            // migration = MessageFormat.format(projection3, c_w_id, c_d_id);
-                            // LOG.info(migration);
-                            // stmt.addBatch(migration);
-                            // migration = MessageFormat.format(projection4, c_w_id, c_d_id);
-                            // LOG.info(migration);
-                            // stmt.addBatch(migration);
-                            stmt.executeBatch();
-                            // threadBench.increment();
-                            // threadBench.increment();
-                            Thread.sleep(200);
-                            if (!flag) break;
+                            for (int c_i_id = 1; c_i_id <= 12; c_i_id++) {
+                                // <= 3000 tuples will be migrated each time
+                                String migration = MessageFormat.format(projection1, c_w_id, c_d_id, c_i_id * 256 - 256,c_i_id * 256);
+                                LOG.info(migration);
+                                stmt.addBatch(migration);
+                                migration = MessageFormat.format(projection2, c_w_id, c_d_id, c_i_id * 256 - 256,c_i_id * 256);
+                                LOG.info(migration);
+                                stmt.addBatch(migration);
+                                // migration = MessageFormat.format(projection3, c_w_id, c_d_id);
+                                // LOG.info(migration);
+                                // stmt.addBatch(migration);
+                                // migration = MessageFormat.format(projection4, c_w_id, c_d_id);
+                                // LOG.info(migration);
+                                // stmt.addBatch(migration);
+                                stmt.executeBatch();
+                                // threadBench.increment();
+                                // threadBench.increment();
+                                // Thread.sleep(200);
+                                if (!flag) break;
+                            }
+
+                            // LOG.info("call customer_proj_background: c_w_id=" + c_w_id + ", c_d_id=" + c_d_id);
+                            // for (int c_i_id = 1; c_i_id <= 12; c_i_id++) {
+                            //     upperProc = c.prepareCall("{ ? = call customer_proj_background( ?, ?, ?, ?, ?) }");
+                            //     upperProc.registerOutParameter(1, java.sql.Types.INTEGER);
+                            //     upperProc.setInt(2, c_w_id);
+                            //     upperProc.setInt(3, c_d_id);
+                            //     upperProc.setInt(4, c_i_id * 256 - 256);
+                            //     upperProc.setInt(5, c_i_id * 256);
+                            //     upperProc.setInt(6, 8);
+                            //     upperProc.execute();
+                            //     // Thread.sleep(1);
+                            //     if (!flag) break;
+                            // }
+                            // if (!flag) break;
                         }
                         if (!flag) break;
                     }
@@ -217,6 +236,8 @@ public class BgThread1 extends Thread {
             }
             stmt.close();
             c.close();
+            if (upperProc != null)
+                upperProc.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
