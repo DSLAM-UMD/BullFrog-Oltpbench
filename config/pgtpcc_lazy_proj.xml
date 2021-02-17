@@ -9,7 +9,7 @@
     <isolation>TRANSACTION_SERIALIZABLE</isolation>
     <terminals>8</terminals>
 
-    <scalefactor>50</scalefactor>
+    <scalefactor>8</scalefactor>
     <uploadCode></uploadCode>
     <uploadUrl></uploadUrl>
 
