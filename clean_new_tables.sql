@@ -37,3 +37,53 @@ CREATE TABLE customer_proj2 (
 
 CREATE INDEX idx_customer_name1 ON customer_proj1 (c_w_id,c_d_id,c_last,c_first);
 CREATE INDEX idx_customer_name2 ON customer_proj2 (c_w_id,c_d_id,c_last,c_first);
+
+
+-- join migration
+DROP TABLE IF EXISTS orderline_stock CASCADE;
+CREATE TABLE orderline_stock (
+  -- id SERIAL,
+  ol_w_id int NOT NULL,
+  ol_d_id int NOT NULL,
+  ol_o_id int NOT NULL,
+  ol_number int NOT NULL,
+  ol_i_id int NOT NULL,
+  ol_delivery_d timestamp NULL DEFAULT NULL,
+  ol_amount decimal(6,2) NOT NULL,
+  ol_supply_w_id int NOT NULL,
+  ol_quantity decimal(2,0) NOT NULL,
+  ol_dist_info char(24) NOT NULL,
+
+  s_w_id int NOT NULL,
+  s_i_id int NOT NULL,
+  s_quantity decimal(4,0) NOT NULL,
+  s_ytd decimal(8,2) NOT NULL,
+  s_order_cnt int NOT NULL,
+  s_remote_cnt int NOT NULL,
+  s_data varchar(50) NOT NULL,
+  s_dist_01 char(24) NOT NULL,
+  s_dist_02 char(24) NOT NULL,
+  s_dist_03 char(24) NOT NULL,
+  s_dist_04 char(24) NOT NULL,
+  s_dist_05 char(24) NOT NULL,
+  s_dist_06 char(24) NOT NULL,
+  s_dist_07 char(24) NOT NULL,
+  s_dist_08 char(24) NOT NULL,
+  s_dist_09 char(24) NOT NULL,
+  s_dist_10 char(24) NOT NULL,
+  PRIMARY KEY (ol_w_id,ol_d_id,ol_o_id,ol_number,s_w_id,s_i_id)
+);
+
+CREATE INDEX os_order_1 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id);
+CREATE INDEX os_order_2 ON orderline_stock (ol_o_id, ol_d_id, ol_w_id, ol_number); 
+CREATE INDEX os_order_3 ON orderline_stock (s_i_id);
+CREATE INDEX os_order_4 ON orderline_stock (s_w_id, s_quantity);
+CREATE INDEX os_order_5 ON orderline_stock (s_w_id, s_i_id);
+CREATE INDEX os_order_6 ON orderline_stock (ol_i_id);
+
+CREATE OR REPLACE VIEW orderline_stock_v AS
+(
+  SELECT *
+  FROM order_line, stock
+  WHERE ol_i_id = s_i_id
+);

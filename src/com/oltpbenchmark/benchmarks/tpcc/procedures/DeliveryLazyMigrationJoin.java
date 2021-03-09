@@ -85,9 +85,9 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             "  s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, " +
             "  s_dist_07, s_dist_08, s_dist_09, s_dist_10 " +
             "  from order_line, stock " +
-            "  where ol_o_id = {0,number,#} " +
+            "  where ol_w_id = {0,number,#} " +
             "  and ol_d_id = {1,number,#} " +
-            "  and ol_w_id = {2,number,#} " +
+            "  and ol_o_id = {2,number,#} " +
             "  and ol_i_id = s_i_id);";
 
 	public SQLStmt delivUpdateDeliveryDateSQL = new SQLStmt(
@@ -244,7 +244,7 @@ public class DeliveryLazyMigrationJoin extends TPCCProcedure {
             if (!DBWorkload.IS_CONFLICT)
                 conn.setAutoCommit(false);
             String migration = MessageFormat.format(migrationSQL2,
-                no_o_id, d_id, w_id);
+                w_id, d_id, no_o_id);
             stmt.executeUpdate(migration);
             if (!DBWorkload.IS_CONFLICT)
                 conn.commit();
