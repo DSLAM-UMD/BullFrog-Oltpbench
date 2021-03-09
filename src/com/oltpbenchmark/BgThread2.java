@@ -199,19 +199,19 @@ public class BgThread2 extends Thread {
                         if (!flag) break;
                     }
                 }
-                 if (DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
-                    for (int c_w_id = 50; c_w_id > 25; c_w_id--) {
-                        for (int c_d_id = 1; c_d_id <= 10; c_d_id++) {
-                            // <= 3000 tuples will be migrated each time
-                            String migration = MessageFormat.format(migrationFmt, c_w_id, c_d_id);
-                            LOG.info(migration);
-                            stmt.executeUpdate(migration);
-                            Thread.sleep(300);
-                            if (!flag) break;
-                        }
-                        if (!flag) break;
-                    }
-                }
+                //  if (DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
+                //     for (int c_w_id = 50; c_w_id > 25; c_w_id--) {
+                //         for (int c_d_id = 1; c_d_id <= 10; c_d_id++) {
+                //             // <= 3000 tuples will be migrated each time
+                //             String migration = MessageFormat.format(migrationFmt, c_w_id, c_d_id);
+                //             LOG.info(migration);
+                //             stmt.executeUpdate(migration);
+                //             Thread.sleep(300);
+                //             if (!flag) break;
+                //         }
+                //         if (!flag) break;
+                //     }
+                // }
                 
                 if (DBWorkload.BACKGROUND_THREAD.equals("join")) {
                     int o_start = 0;

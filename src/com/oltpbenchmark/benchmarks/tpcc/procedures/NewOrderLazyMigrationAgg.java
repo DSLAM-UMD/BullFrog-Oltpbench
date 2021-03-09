@@ -91,8 +91,8 @@ public class NewOrderLazyMigrationAgg extends TPCCProcedure {
             "   AND S_W_ID = ?");
 
 	public final SQLStmt  stmtInsertOrderLineSQL = new SQLStmt(
-			"INSERT INTO " + TPCCConstants.TABLENAME_ORDERLINE_AGG +
-			" (OL_O_ID, OL_D_ID, OL_W_ID, ol_amount_sum, ol_quantity_avg) " +
+			" insert into orderline_agg(" +
+			" OL_O_ID, OL_D_ID, OL_W_ID, ol_amount_sum, ol_quantity_avg) " +
 			" VALUES (?,?,?,?,?) ON CONFLICT (OL_O_ID, OL_D_ID, OL_W_ID) " +
 			" DO UPDATE SET ol_amount_sum=orderline_agg.ol_amount_sum+?, " +
 			" ol_quantity_avg=(orderline_agg.ol_quantity_avg+?)/2::numeric");

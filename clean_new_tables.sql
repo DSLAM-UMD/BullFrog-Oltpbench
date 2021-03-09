@@ -87,3 +87,22 @@ CREATE OR REPLACE VIEW orderline_stock_v AS
   FROM order_line, stock
   WHERE ol_i_id = s_i_id
 );
+
+-- aggregation migration
+DROP TABLE IF EXISTS orderline_agg CASCADE;
+CREATE TABLE orderline_agg (
+  ol_amount_sum decimal(12,2) NOT NULL,
+  ol_quantity_avg decimal(4,0) NOT NULL,
+  ol_o_id int NOT NULL,
+  ol_d_id int NOT NULL,
+  ol_w_id int NOT NULL,
+  PRIMARY KEY (ol_o_id, ol_d_id, ol_w_id)
+);
+
+CREATE OR REPLACE VIEW orderline_agg_v AS
+(
+  SELECT sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id
+  FROM order_line
+  GROUP BY ol_o_id, ol_d_id, ol_w_id
+);
+
