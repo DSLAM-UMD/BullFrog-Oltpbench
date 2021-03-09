@@ -104,7 +104,7 @@ public class BgThread1 extends Thread {
             }
             if (DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
                 migrationFmt =                     
-                    " insert into orderline_agg(" +
+                    "  insert into orderline_agg(  " +
                     " ol_amount_sum, ol_quantity_avg, ol_o_id, ol_d_id, ol_w_id) " +    
                     " (select sum(ol_amount), avg(ol_quantity), ol_o_id, ol_d_id, ol_w_id " +
                     " from order_line where ol_w_id = {0,number,#} and ol_d_id = {1,number,#}" + 
@@ -199,7 +199,7 @@ public class BgThread1 extends Thread {
                     }
                 }
                 if (DBWorkload.BACKGROUND_THREAD.equals("aggregation") || DBWorkload.BACKGROUND_THREAD.equals("agg")) {
-                    for (int c_w_id = 1; c_w_id <= 50; c_w_id++) {
+                    for (int c_w_id = 1; c_w_id <= 5; c_w_id++) {
                         for (int c_d_id = 1; c_d_id <= 10; c_d_id++) {
                             // <= 3000 tuples will be migrated each time
                             String migration = MessageFormat.format(migrationFmt, c_w_id, c_d_id);
