@@ -157,7 +157,7 @@ public class BgThread2 extends Thread {
             stmt = c.createStatement();
             if (DBWorkload.BACKGROUND_THREAD != null) {
                 if (DBWorkload.BACKGROUND_THREAD.equals("projection")  || DBWorkload.BACKGROUND_THREAD.equals("proj")) {
-                    for (int c_w_id = 50; c_w_id > 25; c_w_id--) {
+                    for (int c_w_id = 5; c_w_id > 2; c_w_id--) {
                         for (int c_d_id = 1; c_d_id <= 10; c_d_id++) {
                             // <= 3000 tuples will be migrated each time
                             for (int c_i_id = 1; c_i_id <= 12; c_i_id++) {
