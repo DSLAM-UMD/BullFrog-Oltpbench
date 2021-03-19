@@ -35,13 +35,34 @@
                 <name>StockLevel</name>
                 <id>5</id>
         </transactiontype>
+        <transactiontype>
+                <name>NewOrderBaseMigrationProj</name>
+                <id>6</id>
+        </transactiontype>
+        <transactiontype>
+                <name>PaymentBaseMigrationProj</name>
+                <id>7</id>
+        </transactiontype>
+        <transactiontype>
+                <name>OrderStatusBaseMigrationProj</name>
+                <id>8</id>
+        </transactiontype>
+        <transactiontype>
+                <name>DeliveryBaseMigrationProj</name>
+                <id>9</id>
+        </transactiontype>
         </transactiontypes>
 
     <works>
         <work>
           <time>100</time>
           <rate>700</rate>
-          <weights>45, 43, 4, 4, 4</weights>
+          <weights>45, 43, 4, 4, 4, 0, 0, 0, 0</weights>
+        </work>
+        <work>
+          <time>30</time>
+          <rate>700</rate>
+          <weights>0, 0, 0, 0, 4, 45, 43, 4, 4</weights>
         </work>
         </works>
 
